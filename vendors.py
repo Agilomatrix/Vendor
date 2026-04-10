@@ -23,387 +23,352 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for styling
+# ── Premium CSS ──
 st.markdown("""
 <style>
-    .main-header {
-        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-        color: white;
-        padding: 30px;
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+
+    /* ── Reset & Base ── */
+    html, body, [class*="css"] {
+        font-family: 'Syne', sans-serif;
+    }
+
+    .stApp {
+        background: #0b0e13;
+        background-image:
+            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,140,0,0.12) 0%, transparent 70%),
+            repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px),
+            repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px);
+    }
+
+    /* ── Header ── */
+    .pm-header {
+        position: relative;
+        padding: 48px 40px 40px;
+        margin-bottom: 36px;
+        overflow: hidden;
+        border-radius: 4px;
+        border: 1px solid rgba(255,140,0,0.25);
+        background: linear-gradient(135deg, #111418 0%, #161b22 100%);
+    }
+    .pm-header::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+            -55deg,
+            transparent,
+            transparent 10px,
+            rgba(255,140,0,0.03) 10px,
+            rgba(255,140,0,0.03) 11px
+        );
+    }
+    .pm-header::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #ff8c00, #ffb347, #ff8c00);
+    }
+    .pm-header-inner {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+    .pm-icon-box {
+        width: 64px; height: 64px;
+        border: 2px solid rgba(255,140,0,0.5);
+        border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 28px;
+        background: rgba(255,140,0,0.08);
+        flex-shrink: 0;
+    }
+    .pm-title {
+        font-size: 2.1em;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: #f0f0f0;
+        margin: 0 0 4px 0;
+        line-height: 1.1;
+    }
+    .pm-title span {
+        color: #ff8c00;
+    }
+    .pm-subtitle {
+        font-family: 'DM Mono', monospace;
+        font-size: 0.75em;
+        color: rgba(255,255,255,0.4);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0;
+    }
+    .pm-badge {
+        margin-left: auto;
+        padding: 6px 16px;
+        border: 1px solid rgba(255,140,0,0.3);
+        border-radius: 2px;
+        font-family: 'DM Mono', monospace;
+        font-size: 0.65em;
+        color: #ff8c00;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        background: rgba(255,140,0,0.06);
+        white-space: nowrap;
+    }
+
+    /* ── Upload Zone ── */
+    .upload-zone {
+        border: 1.5px dashed rgba(255,140,0,0.35);
+        border-radius: 4px;
+        padding: 48px 32px;
         text-align: center;
-        border-radius: 20px;
-        margin-bottom: 30px;
+        background: rgba(255,140,0,0.03);
+        margin-bottom: 28px;
+        transition: all 0.3s ease;
+        position: relative;
     }
-    
-    .main-header h1 {
-        font-size: 2.5em;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    .upload-zone-icon {
+        font-size: 3em;
+        margin-bottom: 12px;
+        display: block;
     }
-    
-    .subtitle {
+    .upload-zone h3 {
         font-size: 1.2em;
-        opacity: 0.9;
-        font-style: italic;
+        font-weight: 700;
+        color: #e8e8e8;
+        margin: 0 0 6px 0;
+        letter-spacing: 0.3px;
     }
-    
-    .upload-section {
-        background: #f8f9fa;
-        border: 3px dashed #dee2e6;
-        border-radius: 15px;
-        padding: 40px;
-        text-align: center;
-        margin-bottom: 30px;
+    .upload-zone p {
+        font-family: 'DM Mono', monospace;
+        font-size: 0.72em;
+        color: rgba(255,255,255,0.35);
+        letter-spacing: 1px;
+        margin: 0;
     }
-    
-    .info-section {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 20px;
-        margin-top: 20px;
+    .upload-zone .fmt-tag {
+        display: inline-block;
+        margin-top: 14px;
+        padding: 4px 12px;
+        background: rgba(255,140,0,0.1);
+        border: 1px solid rgba(255,140,0,0.25);
+        border-radius: 2px;
+        font-family: 'DM Mono', monospace;
+        font-size: 0.65em;
+        color: #ff8c00;
+        letter-spacing: 2px;
     }
-    
+
+    /* ── Alert Cards ── */
+    .alert {
+        padding: 14px 18px;
+        border-radius: 3px;
+        margin: 16px 0;
+        font-size: 0.88em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .alert-success {
+        background: rgba(34, 197, 94, 0.08);
+        border: 1px solid rgba(34, 197, 94, 0.25);
+        color: #86efac;
+    }
+    .alert-error {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        color: #fca5a5;
+    }
+
+    /* ── Section Labels ── */
+    .section-label {
+        font-family: 'DM Mono', monospace;
+        font-size: 0.65em;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: #ff8c00;
+        margin: 28px 0 12px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .section-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255,140,0,0.2);
+    }
+
+    /* ── Info Cards ── */
     .info-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-top: 20px;
+        gap: 16px;
+        margin-top: 16px;
     }
-    
     .info-card {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background: #111418;
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 4px;
+        padding: 22px 24px;
+        position: relative;
+        overflow: hidden;
     }
-    
-    .info-card h3 {
-        color: #2c3e50;
-        margin-bottom: 15px;
+    .info-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 3px; height: 100%;
+        background: linear-gradient(180deg, #ff8c00, rgba(255,140,0,0.1));
     }
-    
-    .success-message {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-        padding: 15px;
-        border-radius: 10px;
-        margin: 20px 0;
+    .info-card h4 {
+        font-size: 0.78em;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #ff8c00;
+        margin: 0 0 14px 0;
+        font-family: 'DM Mono', monospace;
     }
-    
-    .error-message {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-        padding: 15px;
-        border-radius: 10px;
-        margin: 20px 0;
+    .info-card ul {
+        list-style: none;
+        padding: 0; margin: 0;
     }
-    
-    .info-message {
-        background: #cce7ff;
-        color: #004085;
-        border: 1px solid #b8daff;
-        padding: 15px;
-        border-radius: 10px;
-        margin: 20px 0;
+    .info-card ul li {
+        font-size: 0.82em;
+        color: rgba(255,255,255,0.55);
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'DM Mono', monospace;
     }
+    .info-card ul li:last-child { border-bottom: none; }
+    .info-card ul li::before {
+        content: '›';
+        color: #ff8c00;
+        font-size: 1.1em;
+    }
+
+    /* ── Mapping Tags ── */
+    .mapping-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        font-family: 'DM Mono', monospace;
+        font-size: 0.75em;
+    }
+    .mapping-key {
+        color: rgba(255,255,255,0.4);
+        min-width: 130px;
+    }
+    .mapping-arrow { color: rgba(255,140,0,0.5); }
+    .mapping-val {
+        color: #ff8c00;
+        background: rgba(255,140,0,0.08);
+        padding: 2px 8px;
+        border-radius: 2px;
+        border: 1px solid rgba(255,140,0,0.2);
+    }
+
+    /* ── Footer ── */
+    .pm-footer {
+        text-align: center;
+        padding: 24px 0 12px;
+        font-family: 'DM Mono', monospace;
+        font-size: 0.65em;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.2);
+        border-top: 1px solid rgba(255,255,255,0.06);
+        margin-top: 40px;
+    }
+    .pm-footer span { color: rgba(255,140,0,0.5); }
+
+    /* ── Streamlit widget overrides ── */
+    .stButton > button {
+        background: #ff8c00 !important;
+        color: #0b0e13 !important;
+        border: none !important;
+        border-radius: 3px !important;
+        font-family: 'Syne', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 0.92em !important;
+        letter-spacing: 1px !important;
+        padding: 14px 28px !important;
+        transition: all 0.2s !important;
+        text-transform: uppercase !important;
+    }
+    .stButton > button:hover {
+        background: #ffb347 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 8px 24px rgba(255,140,0,0.3) !important;
+    }
+    .stDownloadButton > button {
+        background: transparent !important;
+        color: #ff8c00 !important;
+        border: 1.5px solid #ff8c00 !important;
+        border-radius: 3px !important;
+        font-family: 'Syne', sans-serif !important;
+        font-weight: 700 !important;
+        letter-spacing: 1px !important;
+        text-transform: uppercase !important;
+        padding: 14px 28px !important;
+        transition: all 0.2s !important;
+    }
+    .stDownloadButton > button:hover {
+        background: rgba(255,140,0,0.1) !important;
+        box-shadow: 0 0 20px rgba(255,140,0,0.2) !important;
+    }
+    .stFileUploader {
+        background: transparent !important;
+    }
+    .stFileUploader > div {
+        background: rgba(255,140,0,0.04) !important;
+        border: 1.5px dashed rgba(255,140,0,0.3) !important;
+        border-radius: 3px !important;
+    }
+    .stDataFrame { border-radius: 4px !important; }
+    div[data-testid="stDataFrame"] { border: 1px solid rgba(255,255,255,0.07); border-radius: 4px; }
+    h1, h2, h3, .stSubheader { color: #e8e8e8 !important; }
+    .stSpinner > div { border-top-color: #ff8c00 !important; }
+    p, .stMarkdown p { color: rgba(255,255,255,0.6); }
 </style>
 """, unsafe_allow_html=True)
 
-# Header
-st.markdown("""
-<div class="main-header">
-    <h1>📦 Supplier Label Generator</h1>
-    <p class="subtitle" style="font-size: 1.4em;">Designed and Developed by Agilomatrix</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Initialize session state
-if 'uploaded_data' not in st.session_state:
-    st.session_state.uploaded_data = None
-if 'column_mappings' not in st.session_state:
-    st.session_state.column_mappings = {}
-
-def detect_columns(headers):
-    """Detect column mappings based on header names"""
-    mappings = {
-        'document_date': ['DOCUMENT DATE', 'Document Date', 'DATE', 'DOC_DATE', 'DOCUMENT_DATE', 'SHIP_DATE'],
-        'invoice_no': ['INVOICE NO', 'Invoice No', 'INVOICE_NO', 'INVOICE', 'INV_NO', 'INV NO', 'Invoice Number', 'ASN', 'ASN_NO', 'ASN NO'],
-        'po_no': ['PO NO', 'PO No', 'PO_NO', 'PURCHASE_ORDER', 'PURCHASE ORDER', 'PO Number', 'PO_NUMBER', 'PO'],
-        'part_no': ['PART NO', 'Part No', 'PART_NO', 'PART NUMBER', 'PART', 'ITEM', 'PartNo'],
-        'description': ['DESCRIPTION', 'Description', 'DESC', 'ITEM_DESC', 'PART_DESC', 'ITEM DESCRIPTION', 'Part Description'],
-        'quantity': ['QUANTITY', 'Quantity', 'QTY', 'QTY_SHIPPED', 'SHIPPED QTY', 'Qty'],
-        'net_weight': ['NET WEIGHT', 'Net Weight', 'NET_WT', 'NET_WEIGHT', 'Net Weight(KG)', 'NET WT', 'Net Wt.', 'Net Wt', 'NetWt'],
-        'gross_weight': ['GROSS WEIGHT', 'Gross Weight', 'GROSS_WT', 'GROSS_WEIGHT', 'Gross Weight(KG)', 'GROSS WT', 'GROSS WT.', 'Gross Wt.', 'Gross Wt', 'Gross wt.'],
-        'vendor_id': ['VENDOR CODE', 'VENDOR_CODE', 'SHIPPER_PART', 'VENDOR_PART', 'SUPPLIER_PART', 'VENDOR PART', 'SHIPPER PART', 'Shipper ID', 'Shipper_ID', 'SHIPPER_ID', 'VENDOR_ID'],
-        'vendor_name': ['VENDOR NAME', 'VENDOR_NAME', 'Vendor Name', 'SHIPPER NAME', 'SHIPPER_NAME', 'Shipper Name', 'SUPPLIER NAME', 'SUPPLIER_NAME']
-    }
-    column_mappings = {}
-
-    for key, keywords in mappings.items():
-        found = None
-        # First pass: exact match (case-insensitive) to avoid partial collisions
-        for header in headers:
-            if any(header.strip().upper() == keyword.upper() for keyword in keywords):
-                found = header
-                break
-        if not found:
-            # Second pass: contains match fallback
-            for header in headers:
-                header_upper = header.upper()
-                if any(keyword.upper() in header_upper for keyword in keywords):
-                    found = header
-                    break
-        if found:
-            column_mappings[key] = found
-
-    return column_mappings
-
-def get_value_with_fallback(row, column_name, default_value, allow_blank=False):
-    if not column_name:
-        return default_value if not allow_blank else ""
-    if column_name in row and pd.notna(row[column_name]):
-        value = row[column_name]
-        if isinstance(value, pd.Timestamp):
-            return value.strftime('%d-%m-%y')
-        value_str = str(value).strip()
-        return value_str if value_str else ("" if allow_blank else default_value)
-    return "" if allow_blank else default_value
-
-def draw_centered_text(canvas, text, x, y, width):
-    """Helper function to draw centered text"""
-    text_width = canvas.stringWidth(text, canvas._fontname, canvas._fontsize)
-    center_x = x + width / 2 - text_width / 2
-    canvas.drawString(center_x, y, text)
-
-def generate_barcode_image(data, width_cm=3.5, height_cm=0.8):
-    """Generate a barcode image"""
-    if not data or str(data).strip() == "":
-        return None
-    try:
-        from barcode import Code128
-        from barcode.writer import ImageWriter
-
-        code128 = Code128(str(data), writer=ImageWriter())
-        barcode_buffer = io.BytesIO()
-        code128.write(barcode_buffer, options={
-            'module_width': 0.2,
-            'module_height': 10,
-            'quiet_zone': 1,
-            'text_distance': 6,
-            'font_size': 8,
-            'write_text': False
-        })
-
-        barcode_buffer.seek(0)
-        barcode_image = Image.open(barcode_buffer)
-
-        temp_barcode = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-        barcode_image.save(temp_barcode.name, 'PNG')
-        temp_barcode.close()
-        return temp_barcode.name
-    except Exception as e:
-        print(f"Error generating barcode: {e}")
-        return None
-
-def draw_barcode(canvas, data, x, y, width_cm, height_cm):
-    """Draw barcode on canvas"""
-    if not data or str(data).strip() == "":
-        return
-
-    barcode_file = generate_barcode_image(data, width_cm, height_cm)
-    if barcode_file:
-        try:
-            canvas.drawImage(barcode_file, x, y, width=width_cm, height=height_cm)
-            os.unlink(barcode_file)
-        except Exception as e:
-            draw_centered_text(canvas, str(data), x, y + height_cm / 2, width_cm)
-
-def create_label_pdf(data, column_mappings):
-    """Create PDF with shipping labels"""
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    temp_filename = temp_file.name
-    temp_file.close()
-
-    page_width = 10 * cm
-    page_height = 15 * cm
-
-    c = canvas.Canvas(temp_filename, pagesize=(page_width, page_height))
-
-    for index, row in data.iterrows():
-        if index > 0:
-            c.showPage()
-
-        document_date = get_value_with_fallback(row, column_mappings.get('document_date'), '11-07-24')
-        invoice_no    = get_value_with_fallback(row, column_mappings.get('invoice_no'), '', allow_blank=True)
-        po_no         = get_value_with_fallback(row, column_mappings.get('po_no'), '', allow_blank=True)
-        part_no       = get_value_with_fallback(row, column_mappings.get('part_no'), f'PART{index + 1}')
-        description   = get_value_with_fallback(row, column_mappings.get('description'), 'Description')
-        quantity      = get_value_with_fallback(row, column_mappings.get('quantity'), '1')
-        net_weight    = get_value_with_fallback(row, column_mappings.get('net_weight'), '480')
-        gross_weight  = get_value_with_fallback(row, column_mappings.get('gross_weight'), '500')
-        vendor_id     = get_value_with_fallback(row, column_mappings.get('vendor_id'), 'V12345')
-        vendor_name   = get_value_with_fallback(row, column_mappings.get('vendor_name'), 'Vendor Name')
-
-        create_single_label(c, document_date, invoice_no, po_no, part_no, description, quantity,
-                            net_weight, gross_weight, vendor_id, vendor_name, page_width, page_height)
-
-    c.save()
-    return temp_filename
-
-def create_single_label(c, document_date, invoice_no, po_no, part_no, description, quantity,
-                        net_weight, gross_weight, vendor_id, vendor_name, page_width, page_height):
-    """Create a single label"""
-
-    row_height = 1.0 * cm
-    start_y = page_height - 0.5 * cm - row_height
-
-    # Column widths for rows 3,4,5
-    col1_width = 2.5 * cm
-    col2_width = 3.0 * cm
-    col3_width = 3.7 * cm
-
-    c.setLineWidth(1.0)
-    c.setFont('Helvetica', 11)
-
-    # ── Row 1: Pinnacle Mobility Solutions | Date | Date Value ──
-    current_y = start_y
-    eka_col_width    = 5.5 * cm
-    doc_header_width = 1.4 * cm
-    doc_value_width  = 2.3 * cm
-
-    c.rect(0.5 * cm, current_y, eka_col_width, row_height)
-    c.rect(0.5 * cm + eka_col_width, current_y, doc_header_width, row_height)
-    c.rect(0.5 * cm + eka_col_width + doc_header_width, current_y, doc_value_width, row_height)
-
-    c.setFont('Helvetica-Bold', 11)
-    center_y = current_y + row_height / 2
-    draw_centered_text(c, 'Pinnacle Mobility Solutions', 0.5 * cm, center_y + 0.15 * cm, eka_col_width)
-    draw_centered_text(c, 'Pvt. Ltd.', 0.5 * cm, center_y - 0.25 * cm, eka_col_width)
-
-    c.setFont('Helvetica-Bold', 11)
-    draw_centered_text(c, 'Date', 0.5 * cm + eka_col_width, current_y + row_height / 2 - 0.15 * cm, doc_header_width)
-
-    c.setFont('Helvetica', 11)
-    draw_centered_text(c, document_date, 0.5 * cm + eka_col_width + doc_header_width, current_y + row_height / 2 - 0.15 * cm, doc_value_width)
-
-    # ── Row 2: Invoice No | Invoice Value | PO No | PO Value ──
-    current_y -= row_height
-    invoice_label_width = 2.5 * cm
-    invoice_value_width = 3.0 * cm
-    po_label_width      = 1.4 * cm
-    po_value_width      = 2.3 * cm
-
-    c.rect(0.5 * cm, current_y, invoice_label_width, row_height)
-    c.rect(0.5 * cm + invoice_label_width, current_y, invoice_value_width, row_height)
-    c.rect(0.5 * cm + invoice_label_width + invoice_value_width, current_y, po_label_width, row_height)
-    c.rect(0.5 * cm + invoice_label_width + invoice_value_width + po_label_width, current_y, po_value_width, row_height)
-
-    c.setFont('Helvetica-Bold', 11)
-    draw_centered_text(c, 'Invoice No', 0.5 * cm, current_y + row_height / 2 - 0.15 * cm, invoice_label_width)
-
-    c.setFont('Helvetica', 11)
-    if invoice_no and invoice_no.strip():
-        draw_centered_text(c, invoice_no, 0.5 * cm + invoice_label_width, current_y + row_height / 2 - 0.15 * cm, invoice_value_width)
-
-    c.setFont('Helvetica-Bold', 11)
-    draw_centered_text(c, 'PO No', 0.5 * cm + invoice_label_width + invoice_value_width, current_y + row_height / 2 - 0.15 * cm, po_label_width)
-
-    c.setFont('Helvetica', 11)
-    if po_no and po_no.strip():
-        draw_centered_text(c, po_no, 0.5 * cm + invoice_label_width + invoice_value_width + po_label_width, current_y + row_height / 2 - 0.15 * cm, po_value_width)
-
-    # ── Row 3: Part No | Part Value | Barcode ──
-    current_y -= row_height
-    c.rect(0.5 * cm, current_y, col1_width, row_height)
-    c.rect(0.5 * cm + col1_width, current_y, col2_width, row_height)
-    c.rect(0.5 * cm + col1_width + col2_width, current_y, col3_width, row_height)
-
-    c.setFont('Helvetica-Bold', 11)
-    draw_centered_text(c, 'Part No', 0.5 * cm, current_y + row_height / 2 - 0.15 * cm, col1_width)
-    c.setFont('Helvetica', 11)
-    draw_centered_text(c, part_no, 0.5 * cm + col1_width, current_y + row_height / 2 - 0.15 * cm, col2_width)
-    draw_barcode(c, part_no, 0.5 * cm + col1_width + col2_width + 0.1 * cm, current_y + 0.1 * cm, col3_width - 0.2 * cm, row_height - 0.2 * cm)
-
-    # ── Row 4: Description | Description Value ──
-    current_y -= row_height
-    c.rect(0.5 * cm, current_y, col1_width, row_height)
-    c.rect(0.5 * cm + col1_width, current_y, col2_width + col3_width, row_height)
-
-    c.setFont('Helvetica-Bold', 11)
-    draw_centered_text(c, 'Description', 0.5 * cm, current_y + row_height / 2 - 0.15 * cm, col1_width)
-    c.setFont('Helvetica', 11)
-    if len(description) > 25:
-        description = description[:22] + "..."
-    c.drawString(0.5 * cm + col1_width + 0.2 * cm, current_y + row_height / 2 - 0.15 * cm, description)
-
-    # ── Row 5: Quantity | Quantity Value | Barcode ──
-    current_y -= row_height
-    c.rect(0.5 * cm, current_y, col1_width, row_height)
-    c.rect(0.5 * cm + col1_width, current_y, col2_width, row_height)
-    c.rect(0.5 * cm + col1_width + col2_width, current_y, col3_width, row_height)
-
-    c.setFont('Helvetica-Bold', 11)
-    draw_centered_text(c, 'Quantity', 0.5 * cm, current_y + row_height / 2 - 0.15 * cm, col1_width)
-    c.setFont('Helvetica', 11)
-    draw_centered_text(c, quantity, 0.5 * cm + col1_width, current_y + row_height / 2 - 0.15 * cm, col2_width)
-    draw_barcode(c, quantity, 0.5 * cm + col1_width + col2_width + 0.1 * cm, current_y + 0.1 * cm, col3_width - 0.2 * cm, row_height - 0.2 * cm)
-
-    # ── Row 6: Net Wt | Net Value | Gross Wt | Gross Value ──
-    current_y -= row_height
-    header_width = 2.5 * cm
-    value_width  = 2.1 * cm
-
-    c.rect(0.5 * cm, current_y, header_width, row_height)
-    c.rect(0.5 * cm + header_width, current_y, value_width, row_height)
-    c.rect(0.5 * cm + header_width + value_width, current_y, header_width, row_height)
-    c.rect(0.5 * cm + header_width * 2 + value_width, current_y, value_width, row_height)
-
-    c.setFont('Helvetica-Bold', 11)
-    draw_centered_text(c, 'Net Wt(KG)', 0.5 * cm, current_y + row_height / 2 - 0.15 * cm, header_width)
-    c.setFont('Helvetica', 11)
-    draw_centered_text(c, net_weight, 0.5 * cm + header_width, current_y + row_height / 2 - 0.15 * cm, value_width)
-    c.setFont('Helvetica-Bold', 10)
-    draw_centered_text(c, 'Gross Wt(KG)', 0.5 * cm + header_width + value_width, current_y + row_height / 2 - 0.15 * cm, header_width)
-    c.setFont('Helvetica', 11)
-    draw_centered_text(c, gross_weight, 0.5 * cm + header_width * 2 + value_width, current_y + row_height / 2 - 0.15 * cm, value_width)
-
-    # ── Row 7: Vendor | Vendor ID | Vendor Name ──
-    current_y -= row_height
-    row7_height        = 1.0 * cm
-    vendor_label_width = 2.5 * cm
-    vendor_id_width    = 2.5 * cm
-    vendor_name_width  = 4.2 * cm
-
-    c.rect(0.5 * cm, current_y, vendor_label_width, row7_height)
-    c.rect(0.5 * cm + vendor_label_width, current_y, vendor_id_width, row7_height)
-    c.rect(0.5 * cm + vendor_label_width + vendor_id_width, current_y, vendor_name_width, row7_height)
-
-    c.setFont('Helvetica-Bold', 11)
-    draw_centered_text(c, 'Vendor', 0.5 * cm, current_y + row7_height / 2 - 0.15 * cm, vendor_label_width)
-
-    c.setFont('Helvetica', 11)
-    draw_centered_text(c, vendor_id, 0.5 * cm + vendor_label_width, current_y + row7_height / 2 - 0.15 * cm, vendor_id_width)
-
-    display_vendor_name = vendor_name
-    if len(display_vendor_name) > 15:
-        display_vendor_name = display_vendor_name[:12] + "..."
-    draw_centered_text(c, display_vendor_name, 0.5 * cm + vendor_label_width + vendor_id_width, current_y + row7_height / 2 - 0.15 * cm, vendor_name_width)
-
-
 # ── Streamlit UI ──
 
+# Header
 st.markdown("""
-<div class="upload-section">
-    <div style="font-size: 4em; margin-bottom: 20px;">📁</div>
-    <h3>Upload Your Excel or CSV File</h3>
-    <p>Choose a file containing your shipping information</p>
-    <p><small>Supported formats: .xlsx, .xls, .csv</small></p>
+<div class="pm-header">
+    <div class="pm-header-inner">
+        <div class="pm-icon-box">📦</div>
+        <div>
+            <div class="pm-title">Label <span>Generator</span></div>
+            <div class="pm-subtitle">Supplier Shipping Label System</div>
+        </div>
+        <div class="pm-badge">Agilomatrix v2.0</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("", type=['xlsx', 'xls', 'csv'])
+# Upload section
+st.markdown("""
+<div class="upload-zone">
+    <span class="upload-zone-icon">⬆</span>
+    <h3>Drop your data file here</h3>
+    <p>Excel or CSV with shipment records</p>
+    <div class="fmt-tag">XLSX &nbsp;·&nbsp; XLS &nbsp;·&nbsp; CSV</div>
+</div>
+""", unsafe_allow_html=True)
+
+uploaded_file = st.file_uploader("", type=['xlsx', 'xls', 'csv'], label_visibility="collapsed")
 
 if uploaded_file is not None:
     try:
@@ -426,30 +391,45 @@ if uploaded_file is not None:
         st.session_state.uploaded_data = df
 
         st.markdown(f"""
-        <div class="success-message">
-            ✅ File loaded successfully! {len(df)} records found.
+        <div class="alert alert-success">
+            ✅ &nbsp; File loaded — <strong>{len(df)} records</strong> detected in <strong>{uploaded_file.name}</strong>
         </div>
         """, unsafe_allow_html=True)
 
-        st.subheader("📊 Data Preview")
+        # Data Preview
+        st.markdown('<div class="section-label">Data Preview</div>', unsafe_allow_html=True)
         st.dataframe(df.head(), use_container_width=True)
 
-        st.subheader("🔗 Column Mappings Detected")
+        # Column Mappings
+        st.markdown('<div class="section-label">Column Mappings</div>', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write("**Mapped Columns:**")
+            mapping_html = ""
             for key, value in column_mappings.items():
                 if value:
-                    st.write(f"• {key.replace('_', ' ').title()}: `{value}`")
+                    label = key.replace('_', ' ').title()
+                    mapping_html += f"""
+                    <div class="mapping-row">
+                        <span class="mapping-key">{label}</span>
+                        <span class="mapping-arrow">→</span>
+                        <span class="mapping-val">{value}</span>
+                    </div>"""
+            st.markdown(mapping_html, unsafe_allow_html=True)
 
         with col2:
-            st.write("**Available Columns:**")
+            cols_html = ""
             for col in df.columns:
-                st.write(f"• {col}")
+                cols_html += f"""
+                <div class="mapping-row">
+                    <span class="mapping-key" style="color:rgba(255,255,255,0.5);">{col}</span>
+                </div>"""
+            st.markdown(cols_html, unsafe_allow_html=True)
 
-        if st.button("🚀 Generate PDF Labels", type="primary", use_container_width=True):
-            with st.spinner("Generating PDF labels..."):
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        if st.button("⚡  Generate PDF Labels", type="primary", use_container_width=True):
+            with st.spinner("Building labels..."):
                 try:
                     pdf_file = create_label_pdf(df, column_mappings)
 
@@ -459,7 +439,7 @@ if uploaded_file is not None:
                     os.unlink(pdf_file)
 
                     st.download_button(
-                        label="📥 Download PDF Labels",
+                        label="↓  Download PDF Labels",
                         data=pdf_bytes,
                         file_name="shipping_labels.pdf",
                         mime="application/pdf",
@@ -468,64 +448,61 @@ if uploaded_file is not None:
                     )
 
                     st.markdown("""
-                    <div class="success-message">
-                        ✅ PDF generated successfully! Click the download button above to save your labels.
+                    <div class="alert alert-success">
+                        ✅ &nbsp; PDF generated — click the button above to download your labels.
                     </div>
                     """, unsafe_allow_html=True)
 
                 except Exception as e:
                     st.markdown(f"""
-                    <div class="error-message">
-                        ❌ Error generating PDF: {str(e)}
+                    <div class="alert alert-error">
+                        ✖ &nbsp; Error generating PDF: {str(e)}
                     </div>
                     """, unsafe_allow_html=True)
 
     except Exception as e:
         st.markdown(f"""
-        <div class="error-message">
-            ❌ Error reading file: {str(e)}
+        <div class="alert alert-error">
+            ✖ &nbsp; Error reading file: {str(e)}
         </div>
         """, unsafe_allow_html=True)
 
-# Information section
+# Info section
+st.markdown('<div class="section-label">Label Specifications</div>', unsafe_allow_html=True)
 st.markdown("""
-<div class="info-section">
-    <h3>ℹ️ Label Information</h3>
-    <div class="info-grid">
-        <div class="info-card">
-            <h3>Label Features</h3>
-            <ul>
-                <li>📦 Custom 10cm x 15cm label format</li>
-                <li>📊 Real Code128 barcodes (scannable)</li>
-                <li>📍 Fixed Pinnacle Mobility Solutions header</li>
-                <li>🔢 Invoice No + PO No in row 2 (no barcode)</li>
-                <li>🔧 Part number with barcode</li>
-                <li>📈 Quantity with barcode</li>
-                <li>⚖️ Weight information included</li>
-                <li>📋 7-row structured layout</li>
-                <li>🔲 Darker borders for better visibility</li>
-                <li>🏷️ Vendor ID (column 2) and Vendor Name (column 3)</li>
-            </ul>
-        </div>
-        <div class="info-card">
-            <h3>Expected Columns</h3>
-            <ul>
-                <li>Document Date / DATE</li>
-                <li>Invoice No / INVOICE_NO (can be blank)</li>
-                <li>PO No / PO_NO (can be blank)</li>
-                <li>Part No / PART_NO</li>
-                <li>Description / DESC</li>
-                <li>Quantity / QTY</li>
-                <li>Net Weight / NET_WT</li>
-                <li>Gross Weight / GROSS_WT</li>
-                <li>Vendor Name / VENDOR</li>
-                <li>Vendor ID / VENDOR_ID</li>
-            </ul>
-        </div>
+<div class="info-grid">
+    <div class="info-card">
+        <h4>Label Features</h4>
+        <ul>
+            <li>10 cm × 15 cm custom format</li>
+            <li>Code128 scannable barcodes</li>
+            <li>Invoice No + PO No (Row 2)</li>
+            <li>Part No with barcode</li>
+            <li>Quantity with barcode</li>
+            <li>Net &amp; Gross weight fields</li>
+            <li>Vendor ID + Vendor Name</li>
+            <li>7-row structured layout</li>
+        </ul>
+    </div>
+    <div class="info-card">
+        <h4>Expected Columns</h4>
+        <ul>
+            <li>Invoice No</li>
+            <li>PO No</li>
+            <li>Document Date</li>
+            <li>Part No</li>
+            <li>Description</li>
+            <li>Quantity</li>
+            <li>Net Weight / Gross Weight</li>
+            <li>Vendor Code / Vendor Name</li>
+        </ul>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # Footer
-st.markdown("---")
-st.markdown("**Designed and Developed by Agilomatrix**")
+st.markdown("""
+<div class="pm-footer">
+    Designed &amp; Developed by <span>Agilomatrix</span>
+</div>
+""", unsafe_allow_html=True)
