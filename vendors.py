@@ -15,7 +15,6 @@ from barcode import Code128
 from barcode.writer import ImageWriter
 from PIL import Image
 
-# Set page configuration
 st.set_page_config(
     page_title="Supplier Label Generator",
     page_icon="📦",
@@ -23,352 +22,590 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ── Premium CSS ──
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Syne:wght@700&display=swap');
 
-    /* ── Reset & Base ── */
-    html, body, [class*="css"] {
-        font-family: 'Syne', sans-serif;
-    }
+*, *::before, *::after { box-sizing: border-box; }
 
-    .stApp {
-        background: #0b0e13;
-        background-image:
-            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,140,0,0.12) 0%, transparent 70%),
-            repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px),
-            repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px);
-    }
+html, body, [class*="css"] {
+    font-family: 'DM Sans', sans-serif !important;
+}
 
-    /* ── Header ── */
-    .pm-header {
-        position: relative;
-        padding: 48px 40px 40px;
-        margin-bottom: 36px;
-        overflow: hidden;
-        border-radius: 4px;
-        border: 1px solid rgba(255,140,0,0.25);
-        background: linear-gradient(135deg, #111418 0%, #161b22 100%);
-    }
-    .pm-header::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: repeating-linear-gradient(
-            -55deg,
-            transparent,
-            transparent 10px,
-            rgba(255,140,0,0.03) 10px,
-            rgba(255,140,0,0.03) 11px
-        );
-    }
-    .pm-header::after {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #ff8c00, #ffb347, #ff8c00);
-    }
-    .pm-header-inner {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        gap: 24px;
-    }
-    .pm-icon-box {
-        width: 64px; height: 64px;
-        border: 2px solid rgba(255,140,0,0.5);
-        border-radius: 4px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 28px;
-        background: rgba(255,140,0,0.08);
-        flex-shrink: 0;
-    }
-    .pm-title {
-        font-size: 2.1em;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        color: #f0f0f0;
-        margin: 0 0 4px 0;
-        line-height: 1.1;
-    }
-    .pm-title span {
-        color: #ff8c00;
-    }
-    .pm-subtitle {
-        font-family: 'DM Mono', monospace;
-        font-size: 0.75em;
-        color: rgba(255,255,255,0.4);
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        margin: 0;
-    }
-    .pm-badge {
-        margin-left: auto;
-        padding: 6px 16px;
-        border: 1px solid rgba(255,140,0,0.3);
-        border-radius: 2px;
-        font-family: 'DM Mono', monospace;
-        font-size: 0.65em;
-        color: #ff8c00;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        background: rgba(255,140,0,0.06);
-        white-space: nowrap;
-    }
+.stApp {
+    background: #f5f4f1 !important;
+}
 
-    /* ── Upload Zone ── */
-    .upload-zone {
-        border: 1.5px dashed rgba(255,140,0,0.35);
-        border-radius: 4px;
-        padding: 48px 32px;
-        text-align: center;
-        background: rgba(255,140,0,0.03);
-        margin-bottom: 28px;
-        transition: all 0.3s ease;
-        position: relative;
-    }
-    .upload-zone-icon {
-        font-size: 3em;
-        margin-bottom: 12px;
-        display: block;
-    }
-    .upload-zone h3 {
-        font-size: 1.2em;
-        font-weight: 700;
-        color: #e8e8e8;
-        margin: 0 0 6px 0;
-        letter-spacing: 0.3px;
-    }
-    .upload-zone p {
-        font-family: 'DM Mono', monospace;
-        font-size: 0.72em;
-        color: rgba(255,255,255,0.35);
-        letter-spacing: 1px;
-        margin: 0;
-    }
-    .upload-zone .fmt-tag {
-        display: inline-block;
-        margin-top: 14px;
-        padding: 4px 12px;
-        background: rgba(255,140,0,0.1);
-        border: 1px solid rgba(255,140,0,0.25);
-        border-radius: 2px;
-        font-family: 'DM Mono', monospace;
-        font-size: 0.65em;
-        color: #ff8c00;
-        letter-spacing: 2px;
-    }
+/* Hide Streamlit branding */
+#MainMenu, footer, header { visibility: hidden; }
+.block-container {
+    padding: 2.5rem 2rem !important;
+    max-width: 900px !important;
+}
 
-    /* ── Alert Cards ── */
-    .alert {
-        padding: 14px 18px;
-        border-radius: 3px;
-        margin: 16px 0;
-        font-size: 0.88em;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .alert-success {
-        background: rgba(34, 197, 94, 0.08);
-        border: 1px solid rgba(34, 197, 94, 0.25);
-        color: #86efac;
-    }
-    .alert-error {
-        background: rgba(239, 68, 68, 0.08);
-        border: 1px solid rgba(239, 68, 68, 0.25);
-        color: #fca5a5;
-    }
+/* ── Header ── */
+.page-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+.header-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #185fa5;
+    background: #e6f1fb;
+    border: 1px solid #b5d4f4;
+    border-radius: 20px;
+    padding: 4px 14px;
+    margin-bottom: 12px;
+}
+.header-title {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.15;
+    margin-bottom: 8px;
+}
+.header-sub {
+    font-size: 15px;
+    color: #6b6b6b;
+    margin: 0;
+}
 
-    /* ── Section Labels ── */
-    .section-label {
-        font-family: 'DM Mono', monospace;
-        font-size: 0.65em;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        color: #ff8c00;
-        margin: 28px 0 12px 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .section-label::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: rgba(255,140,0,0.2);
-    }
+/* ── Cards ── */
+.ui-card {
+    background: #ffffff;
+    border: 1px solid #e4e2db;
+    border-radius: 16px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.25rem;
+}
+.ui-card-alt {
+    background: #f5f4f1;
+    border: 1px solid #e4e2db;
+    border-radius: 16px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.25rem;
+}
 
-    /* ── Info Cards ── */
-    .info-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-        margin-top: 16px;
-    }
-    .info-card {
-        background: #111418;
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 4px;
-        padding: 22px 24px;
-        position: relative;
-        overflow: hidden;
-    }
-    .info-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0;
-        width: 3px; height: 100%;
-        background: linear-gradient(180deg, #ff8c00, rgba(255,140,0,0.1));
-    }
-    .info-card h4 {
-        font-size: 0.78em;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: #ff8c00;
-        margin: 0 0 14px 0;
-        font-family: 'DM Mono', monospace;
-    }
-    .info-card ul {
-        list-style: none;
-        padding: 0; margin: 0;
-    }
-    .info-card ul li {
-        font-size: 0.82em;
-        color: rgba(255,255,255,0.55);
-        padding: 5px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.04);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-family: 'DM Mono', monospace;
-    }
-    .info-card ul li:last-child { border-bottom: none; }
-    .info-card ul li::before {
-        content: '›';
-        color: #ff8c00;
-        font-size: 1.1em;
-    }
+/* ── Step labels ── */
+.step-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #9e9c95;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 
-    /* ── Mapping Tags ── */
-    .mapping-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 7px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.04);
-        font-family: 'DM Mono', monospace;
-        font-size: 0.75em;
-    }
-    .mapping-key {
-        color: rgba(255,255,255,0.4);
-        min-width: 130px;
-    }
-    .mapping-arrow { color: rgba(255,140,0,0.5); }
-    .mapping-val {
-        color: #ff8c00;
-        background: rgba(255,140,0,0.08);
-        padding: 2px 8px;
-        border-radius: 2px;
-        border: 1px solid rgba(255,140,0,0.2);
-    }
+/* ── Upload zone ── */
+.upload-zone {
+    border: 2px dashed #d3d1c7;
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    background: #fafaf8;
+    transition: all 0.2s;
+}
+.upload-zone:hover {
+    border-color: #378add;
+    background: #e6f1fb;
+}
+.upload-icon-circle {
+    width: 52px;
+    height: 52px;
+    background: #e6f1fb;
+    border: 1px solid #b5d4f4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 22px;
+}
+.upload-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+.upload-sub {
+    font-size: 13px;
+    color: #6b6b6b;
+    margin-bottom: 12px;
+}
+.file-tags {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.file-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 11px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid #d3d1c7;
+    color: #6b6b6b;
+}
 
-    /* ── Footer ── */
-    .pm-footer {
-        text-align: center;
-        padding: 24px 0 12px;
-        font-family: 'DM Mono', monospace;
-        font-size: 0.65em;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: rgba(255,255,255,0.2);
-        border-top: 1px solid rgba(255,255,255,0.06);
-        margin-top: 40px;
-    }
-    .pm-footer span { color: rgba(255,140,0,0.5); }
+/* ── Success bar ── */
+.success-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #eaf3de;
+    border: 1px solid #c0dd97;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 1rem;
+    font-size: 14px;
+    font-weight: 500;
+    color: #3b6d11;
+}
 
-    /* ── Streamlit widget overrides ── */
-    .stButton > button {
-        background: #ff8c00 !important;
-        color: #0b0e13 !important;
-        border: none !important;
-        border-radius: 3px !important;
-        font-family: 'Syne', sans-serif !important;
-        font-weight: 700 !important;
-        font-size: 0.92em !important;
-        letter-spacing: 1px !important;
-        padding: 14px 28px !important;
-        transition: all 0.2s !important;
-        text-transform: uppercase !important;
-    }
-    .stButton > button:hover {
-        background: #ffb347 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 8px 24px rgba(255,140,0,0.3) !important;
-    }
-    .stDownloadButton > button {
-        background: transparent !important;
-        color: #ff8c00 !important;
-        border: 1.5px solid #ff8c00 !important;
-        border-radius: 3px !important;
-        font-family: 'Syne', sans-serif !important;
-        font-weight: 700 !important;
-        letter-spacing: 1px !important;
-        text-transform: uppercase !important;
-        padding: 14px 28px !important;
-        transition: all 0.2s !important;
-    }
-    .stDownloadButton > button:hover {
-        background: rgba(255,140,0,0.1) !important;
-        box-shadow: 0 0 20px rgba(255,140,0,0.2) !important;
-    }
-    .stFileUploader {
-        background: transparent !important;
-    }
-    .stFileUploader > div {
-        background: rgba(255,140,0,0.04) !important;
-        border: 1.5px dashed rgba(255,140,0,0.3) !important;
-        border-radius: 3px !important;
-    }
-    .stDataFrame { border-radius: 4px !important; }
-    div[data-testid="stDataFrame"] { border: 1px solid rgba(255,255,255,0.07); border-radius: 4px; }
-    h1, h2, h3, .stSubheader { color: #e8e8e8 !important; }
-    .stSpinner > div { border-top-color: #ff8c00 !important; }
-    p, .stMarkdown p { color: rgba(255,255,255,0.6); }
+/* ── Error bar ── */
+.error-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fcebeb;
+    border: 1px solid #f7c1c1;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 1rem;
+    font-size: 14px;
+    font-weight: 500;
+    color: #791f1f;
+}
+
+/* ── Record count pill ── */
+.count-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+    font-size: 13px;
+    color: #6b6b6b;
+}
+.count-pill {
+    background: #f5f4f1;
+    border: 1px solid #d3d1c7;
+    border-radius: 20px;
+    padding: 2px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+/* ── Info grid ── */
+.info-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.info-inner-card {
+    background: #fafaf8;
+    border: 1px solid #e4e2db;
+    border-radius: 10px;
+    padding: 1.25rem;
+}
+.info-inner-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #9e9c95;
+    margin-bottom: 10px;
+}
+.info-dot-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.info-dot-list li {
+    font-size: 13px;
+    color: #4a4a47;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #b4b2a9;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+/* ── Divider ── */
+.section-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+}
+.divider-line { flex: 1; height: 1px; background: #e4e2db; }
+.divider-text {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #9e9c95;
+}
+
+/* ── Streamlit widget overrides ── */
+.stFileUploader > div {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+.stFileUploader label { display: none !important; }
+
+div[data-testid="stDataFrame"] {
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    border: 1px solid #e4e2db !important;
+}
+
+.stButton > button {
+    width: 100%;
+    background: #1a1a1a !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 13px 20px !important;
+    cursor: pointer !important;
+    transition: opacity 0.15s !important;
+    letter-spacing: 0.01em;
+}
+.stButton > button:hover { opacity: 0.82 !important; }
+.stButton > button:active { opacity: 0.7 !important; }
+
+.stDownloadButton > button {
+    width: 100%;
+    background: #eaf3de !important;
+    color: #27500a !important;
+    border: 1px solid #c0dd97 !important;
+    border-radius: 10px !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 13px 20px !important;
+    cursor: pointer !important;
+}
+.stDownloadButton > button:hover { background: #c0dd97 !important; }
+
+.stSelectbox > div > div {
+    border-radius: 8px !important;
+    border: 1px solid #d3d1c7 !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 13px !important;
+    background: #fafaf8 !important;
+}
+
+/* Footer */
+.page-footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    font-size: 12px;
+    color: #9e9c95;
+    letter-spacing: 0.04em;
+    border-top: 1px solid #e4e2db;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# ── Streamlit UI ──
+# ── Session state ──
+if 'uploaded_data' not in st.session_state:
+    st.session_state.uploaded_data = None
+if 'column_mappings' not in st.session_state:
+    st.session_state.column_mappings = {}
+if 'pdf_ready' not in st.session_state:
+    st.session_state.pdf_ready = False
+if 'pdf_bytes' not in st.session_state:
+    st.session_state.pdf_bytes = None
 
-# Header
+
+# ── Helpers ──
+
+def detect_columns(headers):
+    mappings = {
+        'document_date': ['DOCUMENT DATE', 'Document Date', 'DATE', 'DOC_DATE', 'DOCUMENT_DATE', 'SHIP_DATE'],
+        'invoice_no':    ['INVOICE NO', 'Invoice No', 'INVOICE_NO', 'INVOICE', 'INV_NO', 'INV NO', 'Invoice Number', 'ASN', 'ASN_NO', 'ASN NO'],
+        'po_no':         ['PO NO', 'PO No', 'PO_NO', 'PURCHASE_ORDER', 'PURCHASE ORDER', 'PO Number', 'PO_NUMBER', 'PO'],
+        'part_no':       ['PART NO', 'Part No', 'PART_NO', 'PART NUMBER', 'PART', 'ITEM', 'PartNo'],
+        'description':   ['DESCRIPTION', 'Description', 'DESC', 'ITEM_DESC', 'PART_DESC', 'ITEM DESCRIPTION', 'Part Description'],
+        'quantity':      ['QUANTITY', 'Quantity', 'QTY', 'QTY_SHIPPED', 'SHIPPED QTY', 'Qty'],
+        'net_weight':    ['NET WEIGHT', 'Net Weight', 'NET_WT', 'NET_WEIGHT', 'Net Weight(KG)', 'NET WT', 'Net Wt.', 'Net Wt', 'NetWt'],
+        'gross_weight':  ['GROSS WEIGHT', 'Gross Weight', 'GROSS_WT', 'GROSS_WEIGHT', 'Gross Weight(KG)', 'GROSS WT', 'GROSS WT.', 'Gross Wt.', 'Gross Wt', 'Gross wt.'],
+        'vendor_id':     ['VENDOR CODE', 'VENDOR_CODE', 'SHIPPER_PART', 'VENDOR_PART', 'SUPPLIER_PART', 'VENDOR PART', 'SHIPPER PART', 'Shipper ID', 'Shipper_ID', 'SHIPPER_ID', 'VENDOR_ID'],
+        'vendor_name':   ['VENDOR NAME', 'VENDOR_NAME', 'Vendor Name', 'SHIPPER NAME', 'SHIPPER_NAME', 'Shipper Name', 'SUPPLIER NAME', 'SUPPLIER_NAME'],
+    }
+    column_mappings = {}
+    for key, keywords in mappings.items():
+        found = None
+        for header in headers:
+            if any(header.strip().upper() == kw.upper() for kw in keywords):
+                found = header
+                break
+        if not found:
+            for header in headers:
+                if any(kw.upper() in header.upper() for kw in keywords):
+                    found = header
+                    break
+        if found:
+            column_mappings[key] = found
+    return column_mappings
+
+
+def get_value_with_fallback(row, column_name, default_value, allow_blank=False):
+    if not column_name:
+        return default_value if not allow_blank else ""
+    if column_name in row and pd.notna(row[column_name]):
+        value = row[column_name]
+        if isinstance(value, pd.Timestamp):
+            return value.strftime('%d-%m-%y')
+        value_str = str(value).strip()
+        return value_str if value_str else ("" if allow_blank else default_value)
+    return "" if allow_blank else default_value
+
+
+def draw_centered_text(c, text, x, y, width):
+    text_width = c.stringWidth(text, c._fontname, c._fontsize)
+    center_x = x + width / 2 - text_width / 2
+    c.drawString(center_x, y, text)
+
+
+def generate_barcode_image(data):
+    if not data or str(data).strip() == "":
+        return None
+    try:
+        code128 = Code128(str(data), writer=ImageWriter())
+        barcode_buffer = io.BytesIO()
+        code128.write(barcode_buffer, options={
+            'module_width': 0.2, 'module_height': 10,
+            'quiet_zone': 1, 'text_distance': 6,
+            'font_size': 8, 'write_text': False,
+        })
+        barcode_buffer.seek(0)
+        barcode_image = Image.open(barcode_buffer)
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+        barcode_image.save(tmp.name, 'PNG')
+        tmp.close()
+        return tmp.name
+    except Exception as e:
+        return None
+
+
+def draw_barcode(c, data, x, y, width_cm, height_cm):
+    if not data or str(data).strip() == "":
+        return
+    barcode_file = generate_barcode_image(data)
+    if barcode_file:
+        try:
+            c.drawImage(barcode_file, x, y, width=width_cm, height=height_cm)
+            os.unlink(barcode_file)
+        except Exception:
+            draw_centered_text(c, str(data), x, y + height_cm / 2, width_cm)
+
+
+def create_single_label(c, document_date, invoice_no, po_no, part_no, description,
+                        quantity, net_weight, gross_weight, vendor_id, vendor_name,
+                        page_width, page_height):
+    row_height = 1.0 * cm
+    start_y    = page_height - 0.5 * cm - row_height
+    col1_width = 2.5 * cm
+    col2_width = 3.0 * cm
+    col3_width = 3.7 * cm
+
+    c.setLineWidth(1.0)
+    c.setFont('Helvetica', 11)
+
+    # Row 1
+    current_y       = start_y
+    eka_col_width   = 5.5 * cm
+    doc_header_width = 1.4 * cm
+    doc_value_width  = 2.3 * cm
+
+    c.rect(0.5*cm, current_y, eka_col_width, row_height)
+    c.rect(0.5*cm + eka_col_width, current_y, doc_header_width, row_height)
+    c.rect(0.5*cm + eka_col_width + doc_header_width, current_y, doc_value_width, row_height)
+
+    c.setFont('Helvetica-Bold', 11)
+    center_y = current_y + row_height / 2
+    draw_centered_text(c, 'Pinnacle Mobility Solutions', 0.5*cm, center_y + 0.15*cm, eka_col_width)
+    draw_centered_text(c, 'Pvt. Ltd.', 0.5*cm, center_y - 0.25*cm, eka_col_width)
+    draw_centered_text(c, 'Date', 0.5*cm + eka_col_width, current_y + row_height/2 - 0.15*cm, doc_header_width)
+    c.setFont('Helvetica', 11)
+    draw_centered_text(c, document_date, 0.5*cm + eka_col_width + doc_header_width, current_y + row_height/2 - 0.15*cm, doc_value_width)
+
+    # Row 2
+    current_y -= row_height
+    inv_lbl = 2.5*cm; inv_val = 3.0*cm; po_lbl = 1.4*cm; po_val = 2.3*cm
+    c.rect(0.5*cm, current_y, inv_lbl, row_height)
+    c.rect(0.5*cm + inv_lbl, current_y, inv_val, row_height)
+    c.rect(0.5*cm + inv_lbl + inv_val, current_y, po_lbl, row_height)
+    c.rect(0.5*cm + inv_lbl + inv_val + po_lbl, current_y, po_val, row_height)
+
+    c.setFont('Helvetica-Bold', 11)
+    draw_centered_text(c, 'Invoice No', 0.5*cm, current_y + row_height/2 - 0.15*cm, inv_lbl)
+    c.setFont('Helvetica', 11)
+    if invoice_no and invoice_no.strip():
+        draw_centered_text(c, invoice_no, 0.5*cm + inv_lbl, current_y + row_height/2 - 0.15*cm, inv_val)
+    c.setFont('Helvetica-Bold', 11)
+    draw_centered_text(c, 'PO No', 0.5*cm + inv_lbl + inv_val, current_y + row_height/2 - 0.15*cm, po_lbl)
+    c.setFont('Helvetica', 11)
+    if po_no and po_no.strip():
+        draw_centered_text(c, po_no, 0.5*cm + inv_lbl + inv_val + po_lbl, current_y + row_height/2 - 0.15*cm, po_val)
+
+    # Row 3 — Part No + Barcode
+    current_y -= row_height
+    c.rect(0.5*cm, current_y, col1_width, row_height)
+    c.rect(0.5*cm + col1_width, current_y, col2_width, row_height)
+    c.rect(0.5*cm + col1_width + col2_width, current_y, col3_width, row_height)
+    c.setFont('Helvetica-Bold', 11)
+    draw_centered_text(c, 'Part No', 0.5*cm, current_y + row_height/2 - 0.15*cm, col1_width)
+    c.setFont('Helvetica', 11)
+    draw_centered_text(c, part_no, 0.5*cm + col1_width, current_y + row_height/2 - 0.15*cm, col2_width)
+    draw_barcode(c, part_no, 0.5*cm + col1_width + col2_width + 0.1*cm, current_y + 0.1*cm, col3_width - 0.2*cm, row_height - 0.2*cm)
+
+    # Row 4 — Description
+    current_y -= row_height
+    c.rect(0.5*cm, current_y, col1_width, row_height)
+    c.rect(0.5*cm + col1_width, current_y, col2_width + col3_width, row_height)
+    c.setFont('Helvetica-Bold', 11)
+    draw_centered_text(c, 'Description', 0.5*cm, current_y + row_height/2 - 0.15*cm, col1_width)
+    c.setFont('Helvetica', 11)
+    desc = description[:22] + "..." if len(description) > 25 else description
+    c.drawString(0.5*cm + col1_width + 0.2*cm, current_y + row_height/2 - 0.15*cm, desc)
+
+    # Row 5 — Quantity + Barcode
+    current_y -= row_height
+    c.rect(0.5*cm, current_y, col1_width, row_height)
+    c.rect(0.5*cm + col1_width, current_y, col2_width, row_height)
+    c.rect(0.5*cm + col1_width + col2_width, current_y, col3_width, row_height)
+    c.setFont('Helvetica-Bold', 11)
+    draw_centered_text(c, 'Quantity', 0.5*cm, current_y + row_height/2 - 0.15*cm, col1_width)
+    c.setFont('Helvetica', 11)
+    draw_centered_text(c, quantity, 0.5*cm + col1_width, current_y + row_height/2 - 0.15*cm, col2_width)
+    draw_barcode(c, quantity, 0.5*cm + col1_width + col2_width + 0.1*cm, current_y + 0.1*cm, col3_width - 0.2*cm, row_height - 0.2*cm)
+
+    # Row 6 — Weights
+    current_y -= row_height
+    hw = 2.5*cm; vw = 2.1*cm
+    c.rect(0.5*cm, current_y, hw, row_height)
+    c.rect(0.5*cm + hw, current_y, vw, row_height)
+    c.rect(0.5*cm + hw + vw, current_y, hw, row_height)
+    c.rect(0.5*cm + hw*2 + vw, current_y, vw, row_height)
+    c.setFont('Helvetica-Bold', 11)
+    draw_centered_text(c, 'Net Wt(KG)', 0.5*cm, current_y + row_height/2 - 0.15*cm, hw)
+    c.setFont('Helvetica', 11)
+    draw_centered_text(c, net_weight, 0.5*cm + hw, current_y + row_height/2 - 0.15*cm, vw)
+    c.setFont('Helvetica-Bold', 10)
+    draw_centered_text(c, 'Gross Wt(KG)', 0.5*cm + hw + vw, current_y + row_height/2 - 0.15*cm, hw)
+    c.setFont('Helvetica', 11)
+    draw_centered_text(c, gross_weight, 0.5*cm + hw*2 + vw, current_y + row_height/2 - 0.15*cm, vw)
+
+    # Row 7 — Vendor
+    current_y -= row_height
+    vlw = 2.5*cm; viw = 2.5*cm; vnw = 4.2*cm
+    c.rect(0.5*cm, current_y, vlw, row_height)
+    c.rect(0.5*cm + vlw, current_y, viw, row_height)
+    c.rect(0.5*cm + vlw + viw, current_y, vnw, row_height)
+    c.setFont('Helvetica-Bold', 11)
+    draw_centered_text(c, 'Vendor', 0.5*cm, current_y + row_height/2 - 0.15*cm, vlw)
+    c.setFont('Helvetica', 11)
+    draw_centered_text(c, vendor_id, 0.5*cm + vlw, current_y + row_height/2 - 0.15*cm, viw)
+    vn = vendor_name[:12] + "..." if len(vendor_name) > 15 else vendor_name
+    draw_centered_text(c, vn, 0.5*cm + vlw + viw, current_y + row_height/2 - 0.15*cm, vnw)
+
+
+def create_label_pdf(data, column_mappings):
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+    tmp_name = tmp.name
+    tmp.close()
+
+    page_width  = 10 * cm
+    page_height = 15 * cm
+    c = canvas.Canvas(tmp_name, pagesize=(page_width, page_height))
+
+    for index, row in data.iterrows():
+        if index > 0:
+            c.showPage()
+        document_date = get_value_with_fallback(row, column_mappings.get('document_date'), '11-07-24')
+        invoice_no    = get_value_with_fallback(row, column_mappings.get('invoice_no'), '', allow_blank=True)
+        po_no         = get_value_with_fallback(row, column_mappings.get('po_no'), '', allow_blank=True)
+        part_no       = get_value_with_fallback(row, column_mappings.get('part_no'), f'PART{index+1}')
+        description   = get_value_with_fallback(row, column_mappings.get('description'), 'Description')
+        quantity      = get_value_with_fallback(row, column_mappings.get('quantity'), '1')
+        net_weight    = get_value_with_fallback(row, column_mappings.get('net_weight'), '480')
+        gross_weight  = get_value_with_fallback(row, column_mappings.get('gross_weight'), '500')
+        vendor_id     = get_value_with_fallback(row, column_mappings.get('vendor_id'), 'V12345')
+        vendor_name   = get_value_with_fallback(row, column_mappings.get('vendor_name'), 'Vendor Name')
+        create_single_label(c, document_date, invoice_no, po_no, part_no, description,
+                            quantity, net_weight, gross_weight, vendor_id, vendor_name,
+                            page_width, page_height)
+    c.save()
+    return tmp_name
+
+
+# ── UI ──
+
 st.markdown("""
-<div class="pm-header">
-    <div class="pm-header-inner">
-        <div class="pm-icon-box">📦</div>
-        <div>
-            <div class="pm-title">Label <span>Generator</span></div>
-            <div class="pm-subtitle">Supplier Shipping Label System</div>
+<div class="page-header">
+    <div class="header-badge">Agilomatrix</div>
+    <div class="header-title">Supplier Label Generator</div>
+    <p class="header-sub">Upload your spreadsheet and generate ready-to-print shipping labels in seconds.</p>
+</div>
+""", unsafe_allow_html=True)
+
+# ── Step 1: Upload ──
+st.markdown("""
+<div class="ui-card">
+    <div class="step-label"><span class="step-num">1</span> Upload your file</div>
+    <div class="upload-zone">
+        <div class="upload-icon-circle">📁</div>
+        <div class="upload-title">Choose a file to upload</div>
+        <div class="upload-sub">Excel or CSV with your shipping data</div>
+        <div class="file-tags">
+            <span class="file-tag">.xlsx</span>
+            <span class="file-tag">.xls</span>
+            <span class="file-tag">.csv</span>
         </div>
-        <div class="pm-badge">Agilomatrix v2.0</div>
     </div>
-</div>
 """, unsafe_allow_html=True)
 
-# Upload section
-st.markdown("""
-<div class="upload-zone">
-    <span class="upload-zone-icon">⬆</span>
-    <h3>Drop your data file here</h3>
-    <p>Excel or CSV with shipment records</p>
-    <div class="fmt-tag">XLSX &nbsp;·&nbsp; XLS &nbsp;·&nbsp; CSV</div>
-</div>
-""", unsafe_allow_html=True)
-
-uploaded_file = st.file_uploader("", type=['xlsx', 'xls', 'csv'], label_visibility="collapsed")
+uploaded_file = st.file_uploader("Upload file", type=['xlsx', 'xls', 'csv'], label_visibility="collapsed")
+st.markdown("</div>", unsafe_allow_html=True)
 
 if uploaded_file is not None:
     try:
@@ -378,131 +615,155 @@ if uploaded_file is not None:
             df = pd.read_excel(uploaded_file)
 
         df.columns = df.columns.astype(str).str.strip()
-
         column_mappings = detect_columns(df.columns.tolist())
 
-        # Safety check: ensure vendor_name is correctly mapped to 'Vendor Name' column
+        # Safety fix for vendor_name
         for col in df.columns:
             if col.strip().lower() == 'vendor name':
                 column_mappings['vendor_name'] = col
                 break
 
-        st.session_state.column_mappings = column_mappings
         st.session_state.uploaded_data = df
+        st.session_state.column_mappings = column_mappings
 
         st.markdown(f"""
-        <div class="alert alert-success">
-            ✅ &nbsp; File loaded — <strong>{len(df)} records</strong> detected in <strong>{uploaded_file.name}</strong>
+        <div class="success-bar">
+            ✅ &nbsp; <strong>{uploaded_file.name}</strong> loaded — {len(df)} records found.
         </div>
         """, unsafe_allow_html=True)
 
-        # Data Preview
-        st.markdown('<div class="section-label">Data Preview</div>', unsafe_allow_html=True)
-        st.dataframe(df.head(), use_container_width=True)
+        # ── Step 2: Data Preview ──
+        st.markdown("""
+        <div class="ui-card" style="margin-top:1.25rem;">
+            <div class="step-label"><span class="step-num">2</span> Preview your data</div>
+        """, unsafe_allow_html=True)
 
-        # Column Mappings
-        st.markdown('<div class="section-label">Column Mappings</div>', unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
+        st.markdown(f"""
+        <div class="count-row">
+            <span>Detected</span>
+            <span class="count-pill">{len(df)}</span>
+            <span>records · showing first 5 rows</span>
+        </div>
+        """, unsafe_allow_html=True)
 
-        with col1:
-            mapping_html = ""
-            for key, value in column_mappings.items():
-                if value:
-                    label = key.replace('_', ' ').title()
-                    mapping_html += f"""
-                    <div class="mapping-row">
-                        <span class="mapping-key">{label}</span>
-                        <span class="mapping-arrow">→</span>
-                        <span class="mapping-val">{value}</span>
-                    </div>"""
-            st.markdown(mapping_html, unsafe_allow_html=True)
+        st.dataframe(df.head(5), use_container_width=True, hide_index=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        with col2:
-            cols_html = ""
-            for col in df.columns:
-                cols_html += f"""
-                <div class="mapping-row">
-                    <span class="mapping-key" style="color:rgba(255,255,255,0.5);">{col}</span>
-                </div>"""
-            st.markdown(cols_html, unsafe_allow_html=True)
+        # ── Step 3: Column Mapping ──
+        st.markdown("""
+        <div class="ui-card" style="margin-top:1.25rem;">
+            <div class="step-label"><span class="step-num">3</span> Confirm column mapping</div>
+            <p style="font-size:13px; color:#6b6b6b; margin-bottom:1.25rem; margin-top:-6px;">
+                We've auto-detected the columns below. Change any dropdowns that look wrong before generating.
+            </p>
+        """, unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        all_cols = [''] + list(df.columns)
 
-        if st.button("⚡  Generate PDF Labels", type="primary", use_container_width=True):
-            with st.spinner("Building labels..."):
+        FIELD_DEFS = [
+            ('document_date', 'Document Date'),
+            ('invoice_no',    'Invoice No (optional)'),
+            ('po_no',         'PO No (optional)'),
+            ('part_no',       'Part No'),
+            ('description',   'Description'),
+            ('quantity',      'Quantity'),
+            ('net_weight',    'Net Weight (KG)'),
+            ('gross_weight',  'Gross Weight (KG)'),
+            ('vendor_id',     'Vendor ID'),
+            ('vendor_name',   'Vendor Name'),
+        ]
+
+        updated_mappings = {}
+        col_pairs = [FIELD_DEFS[i:i+2] for i in range(0, len(FIELD_DEFS), 2)]
+
+        for pair in col_pairs:
+            cols = st.columns(2)
+            for i, (key, label) in enumerate(pair):
+                with cols[i]:
+                    current = column_mappings.get(key, '')
+                    idx = all_cols.index(current) if current in all_cols else 0
+                    chosen = st.selectbox(label, options=all_cols, index=idx, key=f"map_{key}")
+                    updated_mappings[key] = chosen if chosen else None
+
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.session_state.column_mappings = updated_mappings
+
+        # ── Step 4: Generate ──
+        st.markdown("""
+        <div class="ui-card" style="margin-top:1.25rem;">
+            <div class="step-label"><span class="step-num">4</span> Generate labels</div>
+            <p style="font-size:13px; color:#6b6b6b; margin-bottom:1.25rem; margin-top:-6px;">
+                Everything looks good — click below to build your PDF labels.
+            </p>
+        """, unsafe_allow_html=True)
+
+        if st.button("⬇  Generate PDF Labels", use_container_width=True):
+            with st.spinner("Generating labels…"):
                 try:
-                    pdf_file = create_label_pdf(df, column_mappings)
-
+                    pdf_file = create_label_pdf(df, st.session_state.column_mappings)
                     with open(pdf_file, 'rb') as f:
                         pdf_bytes = f.read()
-
                     os.unlink(pdf_file)
-
-                    st.download_button(
-                        label="↓  Download PDF Labels",
-                        data=pdf_bytes,
-                        file_name="shipping_labels.pdf",
-                        mime="application/pdf",
-                        type="primary",
-                        use_container_width=True
-                    )
-
-                    st.markdown("""
-                    <div class="alert alert-success">
-                        ✅ &nbsp; PDF generated — click the button above to download your labels.
-                    </div>
-                    """, unsafe_allow_html=True)
-
+                    st.session_state.pdf_bytes = pdf_bytes
+                    st.session_state.pdf_ready = True
                 except Exception as e:
                     st.markdown(f"""
-                    <div class="alert alert-error">
-                        ✖ &nbsp; Error generating PDF: {str(e)}
-                    </div>
+                    <div class="error-bar">❌ &nbsp; Error generating PDF: {str(e)}</div>
                     """, unsafe_allow_html=True)
+
+        if st.session_state.get('pdf_ready') and st.session_state.get('pdf_bytes'):
+            st.download_button(
+                label="📥  Download PDF Labels",
+                data=st.session_state.pdf_bytes,
+                file_name="shipping_labels.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
+            st.markdown("""
+            <div class="success-bar" style="margin-top:12px;">
+                ✅ &nbsp; PDF ready! Click the download button above.
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     except Exception as e:
         st.markdown(f"""
-        <div class="alert alert-error">
-            ✖ &nbsp; Error reading file: {str(e)}
-        </div>
+        <div class="error-bar">❌ &nbsp; Error reading file: {str(e)}</div>
         """, unsafe_allow_html=True)
 
-# Info section
-st.markdown('<div class="section-label">Label Specifications</div>', unsafe_allow_html=True)
+# ── Info section ──
 st.markdown("""
-<div class="info-grid">
-    <div class="info-card">
-        <h4>Label Features</h4>
-        <ul>
-            <li>10 cm × 15 cm custom format</li>
-            <li>Code128 scannable barcodes</li>
-            <li>Invoice No + PO No (Row 2)</li>
-            <li>Part No with barcode</li>
-            <li>Quantity with barcode</li>
-            <li>Net &amp; Gross weight fields</li>
-            <li>Vendor ID + Vendor Name</li>
-            <li>7-row structured layout</li>
-        </ul>
+<div class="ui-card-alt" style="margin-top:1.5rem;">
+    <div class="section-divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">Label info</div>
+        <div class="divider-line"></div>
     </div>
-    <div class="info-card">
-        <h4>Expected Columns</h4>
-        <ul>
-            <li>Invoice No</li>
-            <li>PO No</li>
-            <li>Document Date</li>
-            <li>Part No</li>
-            <li>Description</li>
-            <li>Quantity</li>
-            <li>Net Weight / Gross Weight</li>
-            <li>Vendor Code / Vendor Name</li>
-        </ul>
+    <div class="info-grid-2col">
+        <div class="info-inner-card">
+            <div class="info-inner-title">Label features</div>
+            <ul class="info-dot-list">
+                <li><span class="dot"></span>10 cm × 15 cm label format</li>
+                <li><span class="dot"></span>Scannable Code128 barcodes</li>
+                <li><span class="dot"></span>Part number + quantity barcodes</li>
+                <li><span class="dot"></span>Invoice and PO number rows</li>
+                <li><span class="dot"></span>Net and gross weight info</li>
+                <li><span class="dot"></span>Vendor ID and vendor name</li>
+            </ul>
+        </div>
+        <div class="info-inner-card">
+            <div class="info-inner-title">Expected columns</div>
+            <ul class="info-dot-list">
+                <li><span class="dot"></span>Document Date</li>
+                <li><span class="dot"></span>Invoice No, PO No</li>
+                <li><span class="dot"></span>Part No, Description</li>
+                <li><span class="dot"></span>Quantity</li>
+                <li><span class="dot"></span>Net Weight, Gross Weight</li>
+                <li><span class="dot"></span>Vendor Name, Vendor ID</li>
+            </ul>
+        </div>
     </div>
 </div>
-""", unsafe_allow_html=True)
-
-# Footer
-st.markdown("""
-<div class="pm-footer">
-    Designed &amp; Developed by <span>Agilomatrix</span>
-</div>
+<div class="page-footer">Designed &amp; developed by Agilomatrix</div>
 """, unsafe_allow_html=True)
