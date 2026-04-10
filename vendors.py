@@ -128,26 +128,33 @@ if 'column_mappings' not in st.session_state:
 def detect_columns(headers):
     """Detect column mappings based on header names"""
     mappings = {
-        'document_date': ['DATE', 'DOC_DATE', 'DOCUMENT_DATE', 'SHIP_DATE', 'DOCUMENT DATE', 'Document Date'],
-        'invoice_no': ['INVOICE', 'INVOICE_NO', 'INVOICE NO', 'INV_NO', 'INV NO', 'Invoice No', 'Invoice Number', 'ASN', 'ASN_NO', 'ASN NO'],
-        'po_no': ['PO', 'PO_NO', 'PO NO', 'PURCHASE_ORDER', 'PURCHASE ORDER', 'PO Number', 'PO_NUMBER'],
-        'part_no': ['PART', 'PART_NO', 'PART NO', 'ITEM', 'PART NUMBER', 'PartNo'],
-        'description': ['DESC', 'DESCRIPTION', 'ITEM_DESC', 'PART_DESC', 'ITEM DESCRIPTION', 'Part Description', 'Description'],
-        'quantity': ['QTY', 'QUANTITY', 'QTY_SHIPPED', 'SHIPPED QTY', 'Quantity', 'Qty'],
-        'net_weight': ['NET_WT', 'NET_WEIGHT', 'NET WEIGHT', 'Net Weight(KG)', 'NET WT', 'Net Wt.', 'Net Wt', 'NetWt'],
-        'gross_weight': ['GROSS_WT', 'GROSS_WEIGHT', 'GROSS WEIGHT', 'Gross Weight(KG)', 'GROSS WT', 'GROSS WT.', 'Gross Wt.', 'Gross Wt', 'Gross wt.'],
-        'vendor_id': ['SHIPPER_PART', 'VENDOR_PART', 'SUPPLIER_PART', 'VENDOR PART', 'SHIPPER PART', 'Shipper ID', 'ID', 'id', 'Shipper_ID', 'Delivery Partner ID', 'SHIPPER_ID', 'VENDOR_ID', 'Vendor ID'],
-        'vendor_name': ['SHIPPER', 'VENDOR', 'SUPPLIER', 'FROM', 'VENDOR NAME', 'SUPPLIER NAME', 'SHIPPER NAME', 'Shipper Name', 'shipper name', 'SHIPPER_NAME', 'Vendor Name', 'VENDOR_NAME']
+        'document_date': ['DOCUMENT DATE', 'Document Date', 'DATE', 'DOC_DATE', 'DOCUMENT_DATE', 'SHIP_DATE'],
+        'invoice_no': ['INVOICE NO', 'Invoice No', 'INVOICE_NO', 'INVOICE', 'INV_NO', 'INV NO', 'Invoice Number', 'ASN', 'ASN_NO', 'ASN NO'],
+        'po_no': ['PO NO', 'PO No', 'PO_NO', 'PURCHASE_ORDER', 'PURCHASE ORDER', 'PO Number', 'PO_NUMBER', 'PO'],
+        'part_no': ['PART NO', 'Part No', 'PART_NO', 'PART NUMBER', 'PART', 'ITEM', 'PartNo'],
+        'description': ['DESCRIPTION', 'Description', 'DESC', 'ITEM_DESC', 'PART_DESC', 'ITEM DESCRIPTION', 'Part Description'],
+        'quantity': ['QUANTITY', 'Quantity', 'QTY', 'QTY_SHIPPED', 'SHIPPED QTY', 'Qty'],
+        'net_weight': ['NET WEIGHT', 'Net Weight', 'NET_WT', 'NET_WEIGHT', 'Net Weight(KG)', 'NET WT', 'Net Wt.', 'Net Wt', 'NetWt'],
+        'gross_weight': ['GROSS WEIGHT', 'Gross Weight', 'GROSS_WT', 'GROSS_WEIGHT', 'Gross Weight(KG)', 'GROSS WT', 'GROSS WT.', 'Gross Wt.', 'Gross Wt', 'Gross wt.'],
+        'vendor_id': ['VENDOR CODE', 'VENDOR_CODE', 'SHIPPER_PART', 'VENDOR_PART', 'SUPPLIER_PART', 'VENDOR PART', 'SHIPPER PART', 'Shipper ID', 'Shipper_ID', 'SHIPPER_ID', 'VENDOR_ID'],
+        'vendor_name': ['VENDOR NAME', 'VENDOR_NAME', 'Vendor Name', 'SHIPPER NAME', 'SHIPPER_NAME', 'Shipper Name', 'SUPPLIER NAME', 'SUPPLIER_NAME']
     }
     column_mappings = {}
 
     for key, keywords in mappings.items():
         found = None
+        # First pass: exact match (case-insensitive) to avoid partial collisions
         for header in headers:
-            header_upper = header.upper()
-            if any(keyword.upper() in header_upper for keyword in keywords):
+            if any(header.strip().upper() == keyword.upper() for keyword in keywords):
                 found = header
                 break
+        if not found:
+            # Second pass: contains match fallback
+            for header in headers:
+                header_upper = header.upper()
+                if any(keyword.upper() in header_upper for keyword in keywords):
+                    found = header
+                    break
         if found:
             column_mappings[key] = found
 
@@ -409,12 +416,11 @@ if uploaded_file is not None:
 
         column_mappings = detect_columns(df.columns.tolist())
 
-        # Ensure vendor_name and vendor_id don't collide
-        if 'vendor_name' not in column_mappings or column_mappings.get('vendor_name') == column_mappings.get('vendor_id'):
-            for col in df.columns:
-                if 'name' in col.lower() or 'vendor' in col.lower() or 'shipper' in col.lower():
-                    column_mappings['vendor_name'] = col
-                    break
+        # Safety check: ensure vendor_name is correctly mapped to 'Vendor Name' column
+        for col in df.columns:
+            if col.strip().lower() == 'vendor name':
+                column_mappings['vendor_name'] = col
+                break
 
         st.session_state.column_mappings = column_mappings
         st.session_state.uploaded_data = df
