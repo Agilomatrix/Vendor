@@ -16,7 +16,7 @@ from barcode.writer import ImageWriter
 from PIL import Image
 
 st.set_page_config(
-    page_title="Supplier Label Generator",
+    page_title="Invoice Supplier Label",
     page_icon="📦",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -575,7 +575,7 @@ def create_label_pdf(data, column_mappings):
 st.markdown("""
 <div class="page-header">
     <div class="header-badge">Agilomatrix</div>
-    <div class="header-title">Supplier Label Generator</div>
+    <div class="header-title">AgiloInvoice Supplier Label</div>
     <p class="header-sub">Upload your spreadsheet and generate ready-to-print shipping labels in seconds.</p>
 </div>
 """, unsafe_allow_html=True)
