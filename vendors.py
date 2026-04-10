@@ -323,14 +323,6 @@ div[data-testid="stDataFrame"] {
 }
 .stDownloadButton > button:hover { background: #c0dd97 !important; }
 
-.stSelectbox > div > div {
-    border-radius: 8px !important;
-    border: 1px solid #d3d1c7 !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 13px !important;
-    background: #fafaf8 !important;
-}
-
 /* Footer */
 .page-footer {
     text-align: center;
@@ -632,68 +624,12 @@ if uploaded_file is not None:
         </div>
         """, unsafe_allow_html=True)
 
-        # ── Step 2: Data Preview ──
+        # ── Step 2: Generate + Download ──
         st.markdown("""
         <div class="ui-card" style="margin-top:1.25rem;">
-            <div class="step-label"><span class="step-num">2</span> Preview your data</div>
-        """, unsafe_allow_html=True)
-
-        st.markdown(f"""
-        <div class="count-row">
-            <span>Detected</span>
-            <span class="count-pill">{len(df)}</span>
-            <span>records · showing first 5 rows</span>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.dataframe(df.head(5), use_container_width=True, hide_index=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # ── Step 3: Column Mapping ──
-        st.markdown("""
-        <div class="ui-card" style="margin-top:1.25rem;">
-            <div class="step-label"><span class="step-num">3</span> Confirm column mapping</div>
+            <div class="step-label"><span class="step-num">2</span> Generate & download labels</div>
             <p style="font-size:13px; color:#6b6b6b; margin-bottom:1.25rem; margin-top:-6px;">
-                We've auto-detected the columns below. Change any dropdowns that look wrong before generating.
-            </p>
-        """, unsafe_allow_html=True)
-
-        all_cols = [''] + list(df.columns)
-
-        FIELD_DEFS = [
-            ('document_date', 'Document Date'),
-            ('invoice_no',    'Invoice No (optional)'),
-            ('po_no',         'PO No (optional)'),
-            ('part_no',       'Part No'),
-            ('description',   'Description'),
-            ('quantity',      'Quantity'),
-            ('net_weight',    'Net Weight (KG)'),
-            ('gross_weight',  'Gross Weight (KG)'),
-            ('vendor_id',     'Vendor ID'),
-            ('vendor_name',   'Vendor Name'),
-        ]
-
-        updated_mappings = {}
-        col_pairs = [FIELD_DEFS[i:i+2] for i in range(0, len(FIELD_DEFS), 2)]
-
-        for pair in col_pairs:
-            cols = st.columns(2)
-            for i, (key, label) in enumerate(pair):
-                with cols[i]:
-                    current = column_mappings.get(key, '')
-                    idx = all_cols.index(current) if current in all_cols else 0
-                    chosen = st.selectbox(label, options=all_cols, index=idx, key=f"map_{key}")
-                    updated_mappings[key] = chosen if chosen else None
-
-        st.markdown("</div>", unsafe_allow_html=True)
-        st.session_state.column_mappings = updated_mappings
-
-        # ── Step 4: Generate ──
-        st.markdown("""
-        <div class="ui-card" style="margin-top:1.25rem;">
-            <div class="step-label"><span class="step-num">4</span> Generate labels</div>
-            <p style="font-size:13px; color:#6b6b6b; margin-bottom:1.25rem; margin-top:-6px;">
-                Everything looks good — click below to build your PDF labels.
+                Columns are auto-detected from your file. Click below to build your PDF labels.
             </p>
         """, unsafe_allow_html=True)
 
