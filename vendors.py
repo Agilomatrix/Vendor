@@ -580,24 +580,32 @@ def create_label_pdf(data, column_mappings):
 # ── UI ──
 
 # ── Header with Logo ──
-st.markdown('<div class="page-header">', unsafe_allow_html=True)
-
-# Logo — displayed via st.image so it renders the actual PNG
 import os as _os
 _logo_path = "Image.png"
-if _os.path.exists(_logo_path):
-    col_l, col_c, col_r = st.columns([1, 2, 1])
-    with col_c:
-        st.image(_logo_path, width=180)
-else:
-    # Fallback badge if logo file is missing
-    st.markdown('<div style="text-align:center;"><span style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#185fa5;background:#e6f1fb;border:1px solid #b5d4f4;border-radius:20px;padding:4px 14px;margin-bottom:12px;">Agilomatrix</span></div>', unsafe_allow_html=True)
 
-st.markdown("""
-    <div class="header-title">AgiloInvoice Supplier Label</div>
-    <p class="header-sub">Upload your spreadsheet and generate ready-to-print shipping labels in seconds.</p>
-</div>
-""", unsafe_allow_html=True)
+if _os.path.exists(_logo_path):
+    import base64
+    with open(_logo_path, "rb") as _f:
+        _logo_b64 = base64.b64encode(_f.read()).decode()
+    st.markdown(f"""
+    <div class="page-header">
+        <div style="display:flex; justify-content:center; align-items:center; margin-bottom:14px;">
+            <img src="data:image/png;base64,{_logo_b64}" style="height:60px; width:auto; object-fit:contain;" />
+        </div>
+        <div class="header-title">AgiloInvoice Supplier Label</div>
+        <p class="header-sub">Upload your spreadsheet and generate ready-to-print shipping labels in seconds.</p>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <div class="page-header">
+        <div style="text-align:center; margin-bottom:12px;">
+            <span style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#185fa5;background:#e6f1fb;border:1px solid #b5d4f4;border-radius:20px;padding:4px 14px;">Agilomatrix</span>
+        </div>
+        <div class="header-title">AgiloInvoice Supplier Label</div>
+        <p class="header-sub">Upload your spreadsheet and generate ready-to-print shipping labels in seconds.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ── Step 1: Upload ──
 st.markdown("""
