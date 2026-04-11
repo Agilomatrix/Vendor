@@ -48,18 +48,11 @@ html, body, [class*="css"] {
     text-align: center;
     margin-bottom: 2.5rem;
 }
-.header-badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #185fa5;
-    background: #e6f1fb;
-    border: 1px solid #b5d4f4;
-    border-radius: 20px;
-    padding: 4px 14px;
-    margin-bottom: 12px;
+.header-logo {
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .header-title {
     font-family: 'Syne', sans-serif !important;
@@ -323,6 +316,12 @@ div[data-testid="stDataFrame"] {
 }
 .stDownloadButton > button:hover { background: #c0dd97 !important; }
 
+/* ── Logo centering ── */
+[data-testid="stImage"] {
+    display: flex !important;
+    justify-content: center !important;
+}
+
 /* Footer */
 .page-footer {
     text-align: center;
@@ -332,6 +331,14 @@ div[data-testid="stDataFrame"] {
     color: #9e9c95;
     letter-spacing: 0.04em;
     border-top: 1px solid #e4e2db;
+    line-height: 1.8;
+}
+.page-footer a {
+    color: #378add;
+    text-decoration: none;
+}
+.page-footer a:hover {
+    text-decoration: underline;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -572,9 +579,21 @@ def create_label_pdf(data, column_mappings):
 
 # ── UI ──
 
+# ── Header with Logo ──
+st.markdown('<div class="page-header">', unsafe_allow_html=True)
+
+# Logo — displayed via st.image so it renders the actual PNG
+import os as _os
+_logo_path = "Image.png"
+if _os.path.exists(_logo_path):
+    col_l, col_c, col_r = st.columns([1, 2, 1])
+    with col_c:
+        st.image(_logo_path, width=180)
+else:
+    # Fallback badge if logo file is missing
+    st.markdown('<div style="text-align:center;"><span style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#185fa5;background:#e6f1fb;border:1px solid #b5d4f4;border-radius:20px;padding:4px 14px;margin-bottom:12px;">Agilomatrix</span></div>', unsafe_allow_html=True)
+
 st.markdown("""
-<div class="page-header">
-    <div class="header-badge">Agilomatrix</div>
     <div class="header-title">AgiloInvoice Supplier Label</div>
     <p class="header-sub">Upload your spreadsheet and generate ready-to-print shipping labels in seconds.</p>
 </div>
@@ -701,5 +720,8 @@ st.markdown("""
         </div>
     </div>
 </div>
-<div class="page-footer">Designed &amp; developed by Agilomatrix</div>
+<div class="page-footer">
+    Designed &amp; developed by <strong>Agilomatrix</strong><br>
+    Need help? Contact us at <a href="mailto:admin@agilomatrix.com">admin@agilomatrix.com</a>
+</div>
 """, unsafe_allow_html=True)
