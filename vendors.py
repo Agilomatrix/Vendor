@@ -593,7 +593,7 @@ if _os.path.exists(_logo_path):
             <img src="data:image/png;base64,{_logo_b64}" style="height:60px; width:auto; object-fit:contain;" />
         </div>
         <div class="header-title">Agilo InvTrace</div>
-        <p class="header-sub">Upload your spreadsheet and generate ready-to-print shipping labels in seconds.</p>
+        <p class="header-sub">Upload your spreadsheet and generate ready-to-print supplier labels in seconds.</p>
     </div>
     """, unsafe_allow_html=True)
 else:
@@ -603,7 +603,7 @@ else:
             <span style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#185fa5;background:#e6f1fb;border:1px solid #b5d4f4;border-radius:20px;padding:4px 14px;">Agilomatrix</span>
         </div>
         <div class="header-title">Agilo InvTrace</div>
-        <p class="header-sub">Upload your spreadsheet and generate ready-to-print shipping labels in seconds.</p>
+        <p class="header-sub">Upload your spreadsheet and generate ready-to-print supplier labels in seconds.</p>
     </div>
     """, unsafe_allow_html=True)
 
