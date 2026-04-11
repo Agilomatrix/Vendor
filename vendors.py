@@ -707,7 +707,7 @@ st.markdown("""
         <div class="info-inner-card">
             <div class="info-inner-title">Label features</div>
             <ul class="info-dot-list">
-                <li><span class="dot"></span>10 cm × 15 cm label format</li>
+                <li><span class="dot"></span>10 cm × 7.5 cm label format</li>
                 <li><span class="dot"></span>Scannable Code128 barcodes</li>
                 <li><span class="dot"></span>Part number + quantity barcodes</li>
                 <li><span class="dot"></span>Invoice and PO number rows</li>
