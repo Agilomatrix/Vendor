@@ -16,7 +16,7 @@ from barcode.writer import ImageWriter
 from PIL import Image
 
 st.set_page_config(
-    page_title="Agilo InvTrace",
+    page_title="Agilo Trace VI",
     page_icon="📦",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -592,7 +592,7 @@ if _os.path.exists(_logo_path):
         <div style="display:flex; justify-content:center; align-items:center; margin-bottom:14px;">
             <img src="data:image/png;base64,{_logo_b64}" style="height:60px; width:auto; object-fit:contain;" />
         </div>
-        <div class="header-title">Agilo InvTrace</div>
+        <div class="header-title">Agilo Trace VI</div>
         <p class="header-sub">Upload your spreadsheet and generate ready-to-print supplier labels in seconds.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -602,7 +602,7 @@ else:
         <div style="text-align:center; margin-bottom:12px;">
             <span style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#185fa5;background:#e6f1fb;border:1px solid #b5d4f4;border-radius:20px;padding:4px 14px;">Agilomatrix</span>
         </div>
-        <div class="header-title">Agilo InvTrace</div>
+        <div class="header-title">Agilo Trace VI</div>
         <p class="header-sub">Upload your spreadsheet and generate ready-to-print supplier labels in seconds.</p>
     </div>
     """, unsafe_allow_html=True)
