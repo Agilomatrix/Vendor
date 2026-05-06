@@ -10,10 +10,12 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.pdfgen import canvas
 import tempfile
 import os
+import re
 import barcode
 from barcode import Code128
 from barcode.writer import ImageWriter
 from PIL import Image
+from datetime import datetime
 
 st.set_page_config(
     page_title="Agilo Trace VI",
@@ -356,6 +358,48 @@ if 'pdf_bytes' not in st.session_state:
 
 # ── Helpers ──
 
+def normalize_date(value):
+    """
+    FIX 3: Normalize date to DD-MM-YY format.
+    Accepts: pandas Timestamp, strings with separators - . /
+    Strips any time component. Returns blank string if value is blank/NaN.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, pd.Timestamp):
+        return value.strftime('%d-%m-%y')
+    value_str = str(value).strip()
+    if not value_str or value_str.lower() in ('nan', 'nat', 'none', ''):
+        return ""
+    # Strip time component if present (e.g. "25-04-26 00:00:00")
+    value_str = value_str.split(' ')[0].split('T')[0]
+    # Try parsing with common separators: -, ., /
+    for sep in ['-', '.', '/']:
+        if sep in value_str:
+            parts = value_str.split(sep)
+            if len(parts) == 3:
+                try:
+                    # Detect if year is first (YYYY-MM-DD) or last (DD-MM-YYYY / DD-MM-YY)
+                    if len(parts[0]) == 4:
+                        # YYYY-MM-DD → reformat to DD-MM-YY
+                        dt = datetime.strptime(value_str.replace(sep, '-'), '%Y-%m-%d')
+                        return dt.strftime('%d-%m-%y')
+                    elif len(parts[2]) == 4:
+                        # DD-MM-YYYY
+                        fmt = f'%d{sep}%m{sep}%Y'
+                        dt = datetime.strptime(value_str, fmt)
+                        return dt.strftime('%d-%m-%y')
+                    elif len(parts[2]) == 2:
+                        # DD-MM-YY  (already target format, just normalise separator)
+                        fmt = f'%d{sep}%m{sep}%y'
+                        dt = datetime.strptime(value_str, fmt)
+                        return dt.strftime('%d-%m-%y')
+                except ValueError:
+                    pass
+    # Fallback: return as-is (already formatted or unrecognised)
+    return value_str
+
+
 def detect_columns(headers):
     mappings = {
         'document_date': ['DOCUMENT DATE', 'Document Date', 'DATE', 'DOC_DATE', 'DOCUMENT_DATE', 'SHIP_DATE'],
@@ -368,6 +412,11 @@ def detect_columns(headers):
         'gross_weight':  ['GROSS WEIGHT', 'Gross Weight', 'GROSS_WT', 'GROSS_WEIGHT', 'Gross Weight(KG)', 'GROSS WT', 'GROSS WT.', 'Gross Wt.', 'Gross Wt', 'Gross wt.'],
         'vendor_id':     ['VENDOR CODE', 'VENDOR_CODE', 'SHIPPER_PART', 'VENDOR_PART', 'SUPPLIER_PART', 'VENDOR PART', 'SHIPPER PART', 'Shipper ID', 'Shipper_ID', 'SHIPPER_ID', 'VENDOR_ID'],
         'vendor_name':   ['VENDOR NAME', 'VENDOR_NAME', 'Vendor Name', 'SHIPPER NAME', 'SHIPPER_NAME', 'Shipper Name', 'SUPPLIER NAME', 'SUPPLIER_NAME'],
+        # FIX 2: detect receiver/buyer name from file
+        'receiver_name': ['RECEIVER', 'RECEIVER NAME', 'RECEIVER_NAME', 'BUYER', 'BUYER NAME', 'BUYER_NAME',
+                          'CONSIGNEE', 'CONSIGNEE NAME', 'CONSIGNEE_NAME', 'SHIP TO', 'SHIP_TO',
+                          'CUSTOMER', 'CUSTOMER NAME', 'CUSTOMER_NAME', 'BILL TO', 'BILL_TO',
+                          'PINNACLE', 'DESTINATION', 'DEST'],
     }
     column_mappings = {}
     for key, keywords in mappings.items():
@@ -386,16 +435,34 @@ def detect_columns(headers):
     return column_mappings
 
 
-def get_value_with_fallback(row, column_name, default_value, allow_blank=False):
+def get_value_with_fallback(row, column_name, default_value="", allow_blank=True):
+    """
+    FIX 1: All fields default to blank ("") — nothing is filled in if the cell is empty.
+    The old code used non-empty defaults like '480', 'V12345', etc.
+    Now every missing/blank cell simply renders as blank on the label.
+    """
     if not column_name:
-        return default_value if not allow_blank else ""
+        return default_value
     if column_name in row and pd.notna(row[column_name]):
         value = row[column_name]
         if isinstance(value, pd.Timestamp):
-            return value.strftime('%d-%m-%y')
+            # Dates handled separately — return raw timestamp so normalize_date can format it
+            return value
         value_str = str(value).strip()
-        return value_str if value_str else ("" if allow_blank else default_value)
-    return "" if allow_blank else default_value
+        return value_str if value_str else default_value
+    return default_value
+
+
+def get_date_value(row, column_name):
+    """FIX 3: Dedicated date getter that normalises format."""
+    if not column_name:
+        return ""
+    if column_name in row:
+        raw = row[column_name]
+        if pd.isna(raw) if not isinstance(raw, str) else (raw.strip() == ""):
+            return ""
+        return normalize_date(raw)
+    return ""
 
 
 def draw_centered_text(c, text, x, y, width):
@@ -437,8 +504,34 @@ def draw_barcode(c, data, x, y, width_cm, height_cm):
             draw_centered_text(c, str(data), x, y + height_cm / 2, width_cm)
 
 
+def split_receiver_name(name):
+    """
+    FIX 2: Split long receiver name into two lines for the label cell.
+    Returns (line1, line2). If short enough, line2 is empty.
+    """
+    name = name.strip()
+    if not name:
+        return ("", "")
+    # Try to split around common breakpoints: 'Pvt', 'Ltd', 'Private', 'Limited', 'Inc', 'Corp'
+    # Or split at ~20 chars near a word boundary
+    max_len = 20
+    if len(name) <= max_len:
+        return (name, "")
+    # Find a split point near the middle
+    mid = len(name) // 2
+    # Search for space around the midpoint
+    for offset in range(0, mid):
+        if name[mid - offset] == ' ':
+            return (name[:mid - offset].strip(), name[mid - offset:].strip())
+        if name[mid + offset] == ' ':
+            return (name[:mid + offset].strip(), name[mid + offset:].strip())
+    # Fallback: hard split
+    return (name[:max_len], name[max_len:])
+
+
 def create_single_label(c, document_date, invoice_no, po_no, part_no, description,
                         quantity, net_weight, gross_weight, vendor_id, vendor_name,
+                        receiver_name,  # FIX 2: now dynamic
                         page_width, page_height):
     row_height = 1.0 * cm
     start_y    = page_height - 0.5 * cm - row_height
@@ -449,7 +542,7 @@ def create_single_label(c, document_date, invoice_no, po_no, part_no, descriptio
     c.setLineWidth(1.0)
     c.setFont('Helvetica', 11)
 
-    # Row 1
+    # Row 1 — Receiver name (dynamic) + Date
     current_y       = start_y
     eka_col_width   = 5.5 * cm
     doc_header_width = 1.4 * cm
@@ -461,13 +554,21 @@ def create_single_label(c, document_date, invoice_no, po_no, part_no, descriptio
 
     c.setFont('Helvetica-Bold', 11)
     center_y = current_y + row_height / 2
-    draw_centered_text(c, 'Pinnacle Mobility Solutions', 0.5*cm, center_y + 0.15*cm, eka_col_width)
-    draw_centered_text(c, 'Pvt. Ltd.', 0.5*cm, center_y - 0.25*cm, eka_col_width)
+
+    # FIX 2: draw receiver name from data (split into two lines if needed)
+    line1, line2 = split_receiver_name(receiver_name)
+    if line2:
+        draw_centered_text(c, line1, 0.5*cm, center_y + 0.15*cm, eka_col_width)
+        draw_centered_text(c, line2, 0.5*cm, center_y - 0.25*cm, eka_col_width)
+    else:
+        draw_centered_text(c, line1, 0.5*cm, center_y - 0.05*cm, eka_col_width)
+
     draw_centered_text(c, 'Date', 0.5*cm + eka_col_width, current_y + row_height/2 - 0.15*cm, doc_header_width)
     c.setFont('Helvetica', 11)
+    # FIX 3: document_date is already normalised to DD-MM-YY
     draw_centered_text(c, document_date, 0.5*cm + eka_col_width + doc_header_width, current_y + row_height/2 - 0.15*cm, doc_value_width)
 
-    # Row 2
+    # Row 2 — Invoice No + PO No
     current_y -= row_height
     inv_lbl = 2.5*cm; inv_val = 3.0*cm; po_lbl = 1.4*cm; po_val = 2.3*cm
     c.rect(0.5*cm, current_y, inv_lbl, row_height)
@@ -478,6 +579,7 @@ def create_single_label(c, document_date, invoice_no, po_no, part_no, descriptio
     c.setFont('Helvetica-Bold', 11)
     draw_centered_text(c, 'Invoice No', 0.5*cm, current_y + row_height/2 - 0.15*cm, inv_lbl)
     c.setFont('Helvetica', 11)
+    # FIX 1: only draw if non-blank
     if invoice_no and invoice_no.strip():
         draw_centered_text(c, invoice_no, 0.5*cm + inv_lbl, current_y + row_height/2 - 0.15*cm, inv_val)
     c.setFont('Helvetica-Bold', 11)
@@ -494,8 +596,9 @@ def create_single_label(c, document_date, invoice_no, po_no, part_no, descriptio
     c.setFont('Helvetica-Bold', 11)
     draw_centered_text(c, 'Part No', 0.5*cm, current_y + row_height/2 - 0.15*cm, col1_width)
     c.setFont('Helvetica', 11)
-    draw_centered_text(c, part_no, 0.5*cm + col1_width, current_y + row_height/2 - 0.15*cm, col2_width)
-    draw_barcode(c, part_no, 0.5*cm + col1_width + col2_width + 0.1*cm, current_y + 0.1*cm, col3_width - 0.2*cm, row_height - 0.2*cm)
+    if part_no and part_no.strip():
+        draw_centered_text(c, part_no, 0.5*cm + col1_width, current_y + row_height/2 - 0.15*cm, col2_width)
+        draw_barcode(c, part_no, 0.5*cm + col1_width + col2_width + 0.1*cm, current_y + 0.1*cm, col3_width - 0.2*cm, row_height - 0.2*cm)
 
     # Row 4 — Description
     current_y -= row_height
@@ -504,8 +607,9 @@ def create_single_label(c, document_date, invoice_no, po_no, part_no, descriptio
     c.setFont('Helvetica-Bold', 11)
     draw_centered_text(c, 'Description', 0.5*cm, current_y + row_height/2 - 0.15*cm, col1_width)
     c.setFont('Helvetica', 11)
-    desc = description[:22] + "..." if len(description) > 25 else description
-    c.drawString(0.5*cm + col1_width + 0.2*cm, current_y + row_height/2 - 0.15*cm, desc)
+    if description and description.strip():
+        desc = description[:22] + "..." if len(description) > 25 else description
+        c.drawString(0.5*cm + col1_width + 0.2*cm, current_y + row_height/2 - 0.15*cm, desc)
 
     # Row 5 — Quantity + Barcode
     current_y -= row_height
@@ -515,8 +619,9 @@ def create_single_label(c, document_date, invoice_no, po_no, part_no, descriptio
     c.setFont('Helvetica-Bold', 11)
     draw_centered_text(c, 'Quantity', 0.5*cm, current_y + row_height/2 - 0.15*cm, col1_width)
     c.setFont('Helvetica', 11)
-    draw_centered_text(c, quantity, 0.5*cm + col1_width, current_y + row_height/2 - 0.15*cm, col2_width)
-    draw_barcode(c, quantity, 0.5*cm + col1_width + col2_width + 0.1*cm, current_y + 0.1*cm, col3_width - 0.2*cm, row_height - 0.2*cm)
+    if quantity and quantity.strip():
+        draw_centered_text(c, quantity, 0.5*cm + col1_width, current_y + row_height/2 - 0.15*cm, col2_width)
+        draw_barcode(c, quantity, 0.5*cm + col1_width + col2_width + 0.1*cm, current_y + 0.1*cm, col3_width - 0.2*cm, row_height - 0.2*cm)
 
     # Row 6 — Weights
     current_y -= row_height
@@ -528,11 +633,14 @@ def create_single_label(c, document_date, invoice_no, po_no, part_no, descriptio
     c.setFont('Helvetica-Bold', 11)
     draw_centered_text(c, 'Net Wt(KG)', 0.5*cm, current_y + row_height/2 - 0.15*cm, hw)
     c.setFont('Helvetica', 11)
-    draw_centered_text(c, net_weight, 0.5*cm + hw, current_y + row_height/2 - 0.15*cm, vw)
+    # FIX 1: blank if empty
+    if net_weight and net_weight.strip():
+        draw_centered_text(c, net_weight, 0.5*cm + hw, current_y + row_height/2 - 0.15*cm, vw)
     c.setFont('Helvetica-Bold', 10)
     draw_centered_text(c, 'Gross Wt(KG)', 0.5*cm + hw + vw, current_y + row_height/2 - 0.15*cm, hw)
     c.setFont('Helvetica', 11)
-    draw_centered_text(c, gross_weight, 0.5*cm + hw*2 + vw, current_y + row_height/2 - 0.15*cm, vw)
+    if gross_weight and gross_weight.strip():
+        draw_centered_text(c, gross_weight, 0.5*cm + hw*2 + vw, current_y + row_height/2 - 0.15*cm, vw)
 
     # Row 7 — Vendor
     current_y -= row_height
@@ -543,9 +651,11 @@ def create_single_label(c, document_date, invoice_no, po_no, part_no, descriptio
     c.setFont('Helvetica-Bold', 11)
     draw_centered_text(c, 'Vendor', 0.5*cm, current_y + row_height/2 - 0.15*cm, vlw)
     c.setFont('Helvetica', 11)
-    draw_centered_text(c, vendor_id, 0.5*cm + vlw, current_y + row_height/2 - 0.15*cm, viw)
-    vn = vendor_name[:12] + "..." if len(vendor_name) > 15 else vendor_name
-    draw_centered_text(c, vn, 0.5*cm + vlw + viw, current_y + row_height/2 - 0.15*cm, vnw)
+    if vendor_id and vendor_id.strip():
+        draw_centered_text(c, vendor_id, 0.5*cm + vlw, current_y + row_height/2 - 0.15*cm, viw)
+    if vendor_name and vendor_name.strip():
+        vn = vendor_name[:12] + "..." if len(vendor_name) > 15 else vendor_name
+        draw_centered_text(c, vn, 0.5*cm + vlw + viw, current_y + row_height/2 - 0.15*cm, vnw)
 
 
 def create_label_pdf(data, column_mappings):
@@ -560,26 +670,36 @@ def create_label_pdf(data, column_mappings):
     for index, row in data.iterrows():
         if index > 0:
             c.showPage()
-        document_date = get_value_with_fallback(row, column_mappings.get('document_date'), '11-07-24')
-        invoice_no    = get_value_with_fallback(row, column_mappings.get('invoice_no'), '', allow_blank=True)
-        po_no         = get_value_with_fallback(row, column_mappings.get('po_no'), '', allow_blank=True)
-        part_no       = get_value_with_fallback(row, column_mappings.get('part_no'), f'PART{index+1}')
-        description   = get_value_with_fallback(row, column_mappings.get('description'), 'Description')
-        quantity      = get_value_with_fallback(row, column_mappings.get('quantity'), '1')
-        net_weight    = get_value_with_fallback(row, column_mappings.get('net_weight'), '480')
-        gross_weight  = get_value_with_fallback(row, column_mappings.get('gross_weight'), '500')
-        vendor_id     = get_value_with_fallback(row, column_mappings.get('vendor_id'), 'V12345')
-        vendor_name   = get_value_with_fallback(row, column_mappings.get('vendor_name'), 'Vendor Name')
-        create_single_label(c, document_date, invoice_no, po_no, part_no, description,
-                            quantity, net_weight, gross_weight, vendor_id, vendor_name,
-                            page_width, page_height)
+
+        # FIX 3: use dedicated date getter
+        document_date = get_date_value(row, column_mappings.get('document_date'))
+
+        # FIX 1: all fields default to "" (blank), never a hardcoded fallback
+        invoice_no   = get_value_with_fallback(row, column_mappings.get('invoice_no'))
+        po_no        = get_value_with_fallback(row, column_mappings.get('po_no'))
+        part_no      = get_value_with_fallback(row, column_mappings.get('part_no'))
+        description  = get_value_with_fallback(row, column_mappings.get('description'))
+        quantity     = get_value_with_fallback(row, column_mappings.get('quantity'))
+        net_weight   = get_value_with_fallback(row, column_mappings.get('net_weight'))
+        gross_weight = get_value_with_fallback(row, column_mappings.get('gross_weight'))
+        vendor_id    = get_value_with_fallback(row, column_mappings.get('vendor_id'))
+        vendor_name  = get_value_with_fallback(row, column_mappings.get('vendor_name'))
+
+        # FIX 2: receiver name from file; fallback to blank (not hardcoded)
+        receiver_name = get_value_with_fallback(row, column_mappings.get('receiver_name'))
+
+        create_single_label(
+            c, document_date, invoice_no, po_no, part_no, description,
+            quantity, net_weight, gross_weight, vendor_id, vendor_name,
+            receiver_name,
+            page_width, page_height
+        )
     c.save()
     return tmp_name
 
 
 # ── UI ──
 
-# ── Header with Logo ──
 import os as _os
 _logo_path = "Image.png"
 
@@ -724,6 +844,7 @@ st.markdown("""
                 <li><span class="dot"></span>Quantity</li>
                 <li><span class="dot"></span>Net Weight, Gross Weight</li>
                 <li><span class="dot"></span>Vendor Name, Vendor ID</li>
+                <li><span class="dot"></span>Receiver / Consignee / Customer</li>
             </ul>
         </div>
     </div>
